@@ -17,6 +17,13 @@ bool Game::Initialize() {
     return false;
   }
 
+  mRenderer = SDL_CreateRenderer(
+      mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+  if (!mRenderer) {
+    SDL_Log("Failed to create renderer: %s", SDL_GetError());
+  }
+
   mIsRunning = true;
 
   return true;
@@ -33,6 +40,8 @@ void Game::RunLoop() {
 void Game::Shutdown() {
   SDL_DestroyWindow(mWindow);
   mWindow = nullptr;
+  SDL_DestroyRenderer(mRenderer);
+  mRenderer = nullptr;
   SDL_Quit();
   mIsRunning = false;
 }
@@ -40,15 +49,27 @@ void Game::Shutdown() {
 void Game::ProcessInput() {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
-    if (event.type == SDL_QUIT) {
+    switch (event.type) {
+    case SDL_QUIT:
       mIsRunning = false;
+      break;
     }
+  }
+
+  // Grabs the entire keyboard state
+  const Uint8 *keyboardState = SDL_GetKeyboardState(NULL);
+  if (keyboardState[SDL_SCANCODE_ESCAPE]) {
+    mIsRunning = false;
   }
 }
 
 void Game::UpdateGame() {}
 
 void Game::GenerateOutput() {
-  // 60 FPS
-  SDL_Delay(16);
+  // Set background
+  SDL_SetRenderDrawColor(mRenderer, 0, 0, 255, 255);
+  // Clear back buffer
+  SDL_RenderClear(mRenderer);
+  // Swap back and front buffers
+  SDL_RenderPresent(mRenderer);
 }

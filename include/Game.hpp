@@ -15,5 +15,6 @@ private:
   void GenerateOutput();
 
   SDL_Window *mWindow = nullptr;
+  SDL_Renderer *mRenderer = nullptr;
   bool mIsRunning = false;
 };
