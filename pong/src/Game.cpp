@@ -1,9 +1,8 @@
 #include "Game.hpp"
 
-Game::Game() {
-  mBallPos = {.x = SCREEN_W / 2, .y = SCREEN_H / 2};
-  mPaddlePos = {.x = mThickness + 10, .y = SCREEN_H / 2};
-}
+Game::Game()
+    : mWindow(nullptr), mRenderer(nullptr), mTicksCount(0), mIsRunning(true),
+      mPaddleDir(0) {}
 
 bool Game::Initialize() {
   int sdlResult = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -27,7 +26,10 @@ bool Game::Initialize() {
     SDL_Log("Failed to create renderer: %s", SDL_GetError());
   }
 
-  mIsRunning = true;
+  mPaddlePos.x = 20.0f;
+  mPaddlePos.y = SCREEN_H / 2.0f;
+  mBallPos.x = SCREEN_W / 2.0f;
+  mBallPos.y = SCREEN_H / 2.0f;
 
   return true;
 }
@@ -64,9 +66,47 @@ void Game::ProcessInput() {
   if (keyboardState[SDL_SCANCODE_ESCAPE]) {
     mIsRunning = false;
   }
+
+  // Update paddle direction
+  mPaddleDir = 0;
+  if (keyboardState[SDL_SCANCODE_W]) {
+    mPaddleDir -= 1;
+  }
+
+  if (keyboardState[SDL_SCANCODE_S]) {
+    mPaddleDir += 1;
+  }
 }
 
-void Game::UpdateGame() {}
+void Game::UpdateGame() {
+  // wait for 16ms or clamp fps to 60
+  while (!SDL_TICKS_PASSED(SDL_GetTicks(), mTicksCount + 16))
+    ;
+
+  // difference in ticks from last frame converted to seconds
+  float deltaTime = (SDL_GetTicks() - mTicksCount) / 1000.0f;
+
+  // clamp max delta time
+  if (deltaTime > 0.05f) {
+    deltaTime = 0.05f;
+  }
+
+  // Update ticks count to next frame
+  mTicksCount = SDL_GetTicks();
+
+  if (mPaddleDir != 0) {
+    // update y pos of paddle based on paddle direction * speed of 300.0f pixels
+    // per second and delta time
+    mPaddlePos.y += mPaddleDir * 300.0f * deltaTime;
+
+    // clamp paddle to screen
+    if (mPaddlePos.y < (mPaddleH / 2.0f + mThickness)) {
+      mPaddlePos.y = mPaddleH / 2.0f + mThickness;
+    } else if (mPaddlePos.y > (SCREEN_H - mPaddleH / 2.0f - mThickness)) {
+      mPaddlePos.y = SCREEN_H - mPaddleH / 2.0f - mThickness;
+    }
+  }
+}
 
 void Game::GenerateOutput() {
   // Set background
@@ -99,12 +139,11 @@ void Game::GenerateOutput() {
                 .h = mThickness};
   SDL_RenderFillRect(mRenderer, &ball);
 
-  // Create paddle
-  SDL_Rect paddle{
-      .x = static_cast<int>(mPaddlePos.x),
-      .y = static_cast<int>(mPaddlePos.y - (mThickness / 2) - (mPaddleW / 2)),
-      .w = mThickness,
-      .h = mPaddleW};
+  // Create left paddle
+  SDL_Rect paddle{.x = static_cast<int>(mPaddlePos.x),
+                  .y = static_cast<int>(mPaddlePos.y - mPaddleH / 2.0f),
+                  .w = mThickness,
+                  .h = static_cast<int>(mPaddleH)};
   SDL_RenderFillRect(mRenderer, &paddle);
 
   // Swap back and front buffers

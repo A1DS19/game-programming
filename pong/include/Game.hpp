@@ -18,15 +18,17 @@ public:
 
 private:
   static constexpr int mThickness = 15;
-  static constexpr int mPaddleW = 100;
+  static constexpr float mPaddleH = 100.0f;
 
   void ProcessInput();
   void UpdateGame();
   void GenerateOutput();
 
-  SDL_Window *mWindow = nullptr;
-  SDL_Renderer *mRenderer = nullptr;
+  SDL_Window *mWindow;
+  SDL_Renderer *mRenderer;
   Vector2 mBallPos;
   Vector2 mPaddlePos;
-  bool mIsRunning = false;
+  bool mIsRunning;
+  Uint32 mTicksCount;
+  int mPaddleDir;
 };
