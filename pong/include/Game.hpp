@@ -31,4 +31,5 @@ private:
   bool mIsRunning;
   Uint32 mTicksCount;
   int mPaddleDir;
+  Vector2 mBallVel;
 };

@@ -30,6 +30,8 @@ bool Game::Initialize() {
   mPaddlePos.y = SCREEN_H / 2.0f;
   mBallPos.x = SCREEN_W / 2.0f;
   mBallPos.y = SCREEN_H / 2.0f;
+  mBallVel.x = -200.0f;
+  mBallVel.y = 235.0f;
 
   return true;
 }
@@ -105,6 +107,32 @@ void Game::UpdateGame() {
     } else if (mPaddlePos.y > (SCREEN_H - mPaddleH / 2.0f - mThickness)) {
       mPaddlePos.y = SCREEN_H - mPaddleH / 2.0f - mThickness;
     }
+  }
+
+  mBallPos.x += mBallVel.x * deltaTime;
+  mBallPos.y += mBallVel.y * deltaTime;
+
+  // bounce if needed
+  // did ball intersect with paddle?
+  float diff = mPaddlePos.y - mBallPos.y;
+  diff = (diff > 0.0f) ? diff : -diff;
+
+  // did ball collided with paddle
+  if (diff <= mPaddleH / 2.0f && mBallPos.x <= 25.0f && mBallPos.x >= 20.0f &&
+      mBallVel.x < 0.0f) {
+    mBallVel.x *= -1.0f;
+    // check if wall went off screen
+  } else if (mBallPos.x <= 0.0f) {
+    mIsRunning = false;
+    // did ball collided with rigth wall?
+  } else if (mBallPos.x >= (SCREEN_W - mThickness) && mBallVel.x > 0.0f) {
+    mBallVel.x *= -1.0f;
+    // did ball collided with top wall
+  } else if (mBallPos.y <= mThickness && mBallVel.y < 0.0f) {
+    mBallVel.y *= -1.0f;
+    // did ball collided with bottom wall
+  } else if (mBallPos.y >= (SCREEN_H - mThickness) && mBallVel.y > 0.0f) {
+    mBallVel.y *= -1.0f;
   }
 }
 
