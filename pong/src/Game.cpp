@@ -1,5 +1,14 @@
 #include "Game.hpp"
 
+#include <random>
+
+static float generate_random_float(float min, float max) {
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  std::uniform_real_distribution<float> dist(min, max);
+  return dist(gen);
+}
+
 Game::Game()
     : mWindow(nullptr), mRenderer(nullptr), mTicksCount(0), mIsRunning(true),
       mPaddleDir(0) {}
@@ -28,10 +37,14 @@ bool Game::Initialize() {
 
   mPaddlePos.x = 20.0f;
   mPaddlePos.y = SCREEN_H / 2.0f;
-  mBallPos.x = SCREEN_W / 2.0f;
-  mBallPos.y = SCREEN_H / 2.0f;
-  mBallVel.x = -200.0f;
-  mBallVel.y = 235.0f;
+
+  for (auto i = 0; i < 1; i++) {
+    auto ball =
+        Ball{.pos{.x = generate_random_float(550, SCREEN_W / 2),
+                  .y = generate_random_float(250, SCREEN_H / 2)},
+             .vel{.x = -200.0f, .y = generate_random_float(100.0f, 235.0f)}};
+    mBalls.push_back(ball);
+  }
 
   return true;
 }
@@ -109,30 +122,32 @@ void Game::UpdateGame() {
     }
   }
 
-  mBallPos.x += mBallVel.x * deltaTime;
-  mBallPos.y += mBallVel.y * deltaTime;
+  for (auto &[ballPos, ballVel] : mBalls) {
+    ballPos.x += ballVel.x * deltaTime;
+    ballPos.y += ballVel.y * deltaTime;
 
-  // bounce if needed
-  // did ball intersect with paddle?
-  float diff = mPaddlePos.y - mBallPos.y;
-  diff = (diff > 0.0f) ? diff : -diff;
+    // bounce if needed
+    // did ball intersect with paddle?
+    float diff = mPaddlePos.y - ballPos.y;
+    diff = (diff > 0.0f) ? diff : -diff;
 
-  // did ball collided with paddle
-  if (diff <= mPaddleH / 2.0f && mBallPos.x <= 25.0f && mBallPos.x >= 20.0f &&
-      mBallVel.x < 0.0f) {
-    mBallVel.x *= -1.0f;
-    // check if wall went off screen
-  } else if (mBallPos.x <= 0.0f) {
-    mIsRunning = false;
-    // did ball collided with rigth wall?
-  } else if (mBallPos.x >= (SCREEN_W - mThickness) && mBallVel.x > 0.0f) {
-    mBallVel.x *= -1.0f;
-    // did ball collided with top wall
-  } else if (mBallPos.y <= mThickness && mBallVel.y < 0.0f) {
-    mBallVel.y *= -1.0f;
-    // did ball collided with bottom wall
-  } else if (mBallPos.y >= (SCREEN_H - mThickness) && mBallVel.y > 0.0f) {
-    mBallVel.y *= -1.0f;
+    // did ball collided with paddle
+    if (diff <= mPaddleH / 2.0f && ballPos.x <= 25.0f && ballPos.x >= 20.0f &&
+        ballVel.x < 0.0f) {
+      ballVel.x *= -1.0f;
+      // check if wall went off screen
+    } else if (ballPos.x <= 0.0f) {
+      mIsRunning = false;
+      // did ball collided with rigth wall?
+    } else if (ballPos.x >= (SCREEN_W - mThickness) && ballVel.x > 0.0f) {
+      ballVel.x *= -1.0f;
+      // did ball collided with top wall
+    } else if (ballPos.y <= mThickness && ballVel.y < 0.0f) {
+      ballVel.y *= -1.0f;
+      // did ball collided with bottom wall
+    } else if (ballPos.y >= (SCREEN_H - mThickness) && ballVel.y > 0.0f) {
+      ballVel.y *= -1.0f;
+    }
   }
 }
 
@@ -160,12 +175,14 @@ void Game::GenerateOutput() {
       .x = SCREEN_W - mThickness, .y = 0, .w = mThickness, .h = SCREEN_H};
   SDL_RenderFillRect(mRenderer, &rightWall);
 
-  // Create ball
-  SDL_Rect ball{.x = static_cast<int>(mBallPos.x - mThickness / 2),
-                .y = static_cast<int>(mBallPos.y - mThickness / 2),
-                .w = mThickness,
-                .h = mThickness};
-  SDL_RenderFillRect(mRenderer, &ball);
+  // Create balls
+  for (auto &[ballPos, ballVel] : mBalls) {
+    SDL_Rect ball{.x = static_cast<int>(ballPos.x - mThickness / 2),
+                  .y = static_cast<int>(ballPos.y - mThickness / 2),
+                  .w = mThickness,
+                  .h = mThickness};
+    SDL_RenderFillRect(mRenderer, &ball);
+  }
 
   // Create left paddle
   SDL_Rect paddle{.x = static_cast<int>(mPaddlePos.x),

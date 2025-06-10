@@ -2,6 +2,8 @@
 
 #include <SDL2/SDL.h>
 
+#include <vector>
+
 class Game {
 public:
   static constexpr int SCREEN_W = 1024;
@@ -9,6 +11,10 @@ public:
   struct Vector2 {
     float x;
     float y;
+  };
+  struct Ball {
+    Vector2 pos;
+    Vector2 vel;
   };
 
   Game();
@@ -26,10 +32,9 @@ private:
 
   SDL_Window *mWindow;
   SDL_Renderer *mRenderer;
-  Vector2 mBallPos;
   Vector2 mPaddlePos;
   bool mIsRunning;
   Uint32 mTicksCount;
   int mPaddleDir;
-  Vector2 mBallVel;
+  std::vector<Ball> mBalls;
 };
