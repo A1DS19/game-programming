@@ -40,11 +40,19 @@ FetchContent_Declare(SDL
 )
 FetchContent_MakeAvailable(SDL)
 
+
+FetchContent_Declare(SDL_image
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL_image
+  GIT_TAG        release-2.8.8
+)
+FetchContent_MakeAvailable(SDL_image)
+
 # 10. Link SDL2 to your “main” target
 target_link_libraries(main
   PRIVATE
     SDL2::SDL2
     SDL2::SDL2main
+    SDL2_image::SDL2_image
 )
 
 # 11. Custom target to generate .clang_complete
