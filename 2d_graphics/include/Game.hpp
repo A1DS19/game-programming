@@ -11,6 +11,7 @@
 
 class Actor;
 class SpriteComponent;
+class Ship;
 class Game {
 public:
   Game();
@@ -21,6 +22,7 @@ public:
   void RemoveActor(Actor *actor);
   void AddSprite(SpriteComponent *sprite);
   void RemoveSprite(SpriteComponent *sprite);
+  SDL_Texture *GetTexture(const std::string &filename);
 
 private:
   void ProcessInput();
@@ -38,4 +40,5 @@ private:
   Uint32 mTicksCount;
   std::unordered_map<std::string, SDL_Texture *> mTextures;
   std::vector<SpriteComponent *> mSprites;
+  Ship *mShip;
 };
