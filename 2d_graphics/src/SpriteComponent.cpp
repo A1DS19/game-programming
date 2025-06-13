@@ -1,10 +1,14 @@
 #include "SpriteComponent.hpp"
 
 #include "Actor.hpp"
+#include "Component.hpp"
 #include "Game.hpp"
 #include "Math.hpp"
 #include "SDL_rect.h"
 #include "SDL_render.h"
+
+SpriteComponent::SpriteComponent(Actor *actor, int drawOrder)
+    : Component(actor, drawOrder) {}
 
 void SpriteComponent::SetTexture(SDL_Texture *texture) {
   mTexture = texture;

@@ -10,7 +10,7 @@ class Component {
 public:
   // The lower the update order is then it will update quicker
   Component(Actor *owner, int updateOrder = 100);
-  virtual ~Component();
+  virtual ~Component() = default;
 
   // Update the component by its deltaTime
   virtual void Update(float deltaTime);

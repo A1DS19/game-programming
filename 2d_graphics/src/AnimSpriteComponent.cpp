@@ -2,6 +2,9 @@
 
 #include "SpriteComponent.hpp"
 
+AnimSpriteComponent::AnimSpriteComponent(Actor *actor, int drawOrder)
+    : SpriteComponent(actor, drawOrder) {}
+
 void AnimSpriteComponent::Update(float deltaTime) {
   SpriteComponent::Update(deltaTime);
   if (mAnimTextures.size() > 0) {
