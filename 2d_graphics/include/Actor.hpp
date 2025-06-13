@@ -9,6 +9,7 @@ Rule of thumb:
 If your class has any virtual functions, give it a virtual destructor.
 */
 
+class Component; // or do in param or template class Component
 class Actor {
 public:
   // Track state of actor
@@ -23,8 +24,8 @@ public:
   void UpdateComponents(float deltaTime);
   // Any specific actor update code
   virtual void UpdateActor(float deltaTime);
-  void AddComponent(class Component *component);
-  void RemoveComponent(class Component *component);
+  void AddComponent(Component *component);
+  void RemoveComponent(Component *component);
 
   State GetState() const { return mState; }
   void SetState(State state) { mState = state; }
@@ -43,6 +44,6 @@ private:
   // Uniform scale (1.0f to 100.0f)
   float mScale;
   float mRotation;
-  std::vector<class Component *> mComponents;
+  std::vector<Component *> mComponents;
   class Game *mGame;
 };
