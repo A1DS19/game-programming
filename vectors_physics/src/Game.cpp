@@ -80,6 +80,12 @@ void Game::ProcessInput() {
   if (keyboardState[SDL_SCANCODE_ESCAPE]) {
     mIsRunning = false;
   }
+
+  mUpdatingActors = true;
+  for (auto actor : mActors) {
+    actor->ProcessInput(keyboardState);
+  }
+  mUpdatingActors = false;
 }
 
 void Game::UpdateGame() {
@@ -201,10 +207,10 @@ void Game::LoadData() {
   mShip->SetPosition(Vector2(512.0f, 384.0f));
   mShip->SetRotation(Math::PiOver2);
 
-  // const int numAsteroids = 20;
-  // for (int i = 0; i < numAsteroids; i++) {
-  //   new Asteroid(this);
-  // }
+  const int numAsteroids = 20;
+  for (int i = 0; i < numAsteroids; i++) {
+    new Asteroid(this);
+  }
 }
 
 void Game::UnloadData() {
