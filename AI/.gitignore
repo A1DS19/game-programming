@@ -1,0 +1,16 @@
+# Build artifacts
+build/*
+bin/*
+lib/*
+
+# Editor files
+*.swp
+*~
+
+# OS-specific
+.DS_Store
+.cache/
+
+# Generated
+compile_commands.json
+.clang_complete
