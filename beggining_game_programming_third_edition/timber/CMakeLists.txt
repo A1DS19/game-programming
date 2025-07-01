@@ -10,24 +10,24 @@ file(GLOB SOURCES CONFIGURE_DEPENDS
     ${CMAKE_SOURCE_DIR}/src/*.cpp
 )
 
-set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/sfml@2" CACHE STRING "SFML install prefix")
+set(CMAKE_PREFIX_PATH "/opt/homebrew/opt/sfml" CACHE STRING "SFML install prefix")
 
-find_package(SFML 2.6 REQUIRED COMPONENTS graphics window system audio network)
-
-add_library(SFML::Graphics ALIAS sfml-graphics)
-add_library(SFML::Window  ALIAS sfml-window)
-add_library(SFML::System  ALIAS sfml-system)
-add_library(SFML::Audio   ALIAS sfml-audio)
-add_library(SFML::Network ALIAS sfml-network)
+find_package(SFML 3 REQUIRED COMPONENTS
+  Graphics
+  Window
+  System
+  Audio
+  Network
+)
 
 add_executable(main ${SOURCES})
 
 target_link_libraries(main PRIVATE
-    SFML::Graphics
-    SFML::Window
-    SFML::System
-    SFML::Audio
-    SFML::Network
+  SFML::Graphics
+  SFML::Window
+  SFML::System
+  SFML::Audio
+  SFML::Network
 )
 
 set_target_properties(main PROPERTIES
