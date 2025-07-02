@@ -142,7 +142,7 @@ int main() {
 
       // How high is the cloud
       srand((int)time(0) * 10);
-      float height = (rand() % 150);
+      float height = (rand() % 550);
       spriteCloud3.setPosition({-200, height});
       cloudActive3 = true;
     } else {
