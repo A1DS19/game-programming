@@ -45,7 +45,7 @@ int main() {
   spriteBackground.setPosition({0, 0});
 
   sf::Sprite spriteTree(textureTree);
-  spriteTree.setPosition({810, 0});
+  spriteTree.setPosition({610, 0});
 
   sf::Sprite spriteBee(textureBee);
   spriteBee.setPosition({0, 600});
