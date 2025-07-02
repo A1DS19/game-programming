@@ -1,11 +1,11 @@
 #include "events.hpp"
 #include "sprites.hpp"
+#include <cstdlib>
+#include <ctime>
 
 int main() {
   constexpr auto screenDims = sf::Vector2u{1920, 1080};
   sf::RenderWindow window(sf::VideoMode(screenDims), "Timber");
-
-  window.setVerticalSyncEnabled(true);
 
   sf::Texture textureBackground;
   if (!loadTexture(textureBackground, "../assets/graphics/background.png")) {
@@ -13,7 +13,7 @@ int main() {
   }
 
   sf::Texture textureTree;
-  if (!loadTexture(textureTree, "../assets/graphics/tree.png")) {
+  if (!loadTexture(textureTree, "../assets/graphics/tree2.png")) {
     return 1;
   }
 
@@ -59,6 +59,7 @@ int main() {
   sf::Sprite spriteCloud3(textureCloud3);
   spriteCloud3.setPosition({0, 370});
 
+  sf::Clock clock;
   while (window.isOpen()) {
     while (const std::optional maybeEvent = window.pollEvent()) {
       const sf::Event &event = *maybeEvent;
@@ -67,7 +68,28 @@ int main() {
       keyPressedHandler(event, window);
     }
 
+    sf::Time dt = clock.restart();
+
     window.clear(sf::Color::Black);
+    if (!beeActive) {
+      // How fast is the bee
+      srand((int)time(0)); // seed rand
+      beeSpeed = (rand() % 1000) + 500;
+
+      // How high is the bee
+      srand((int)time(0) * 10);
+      float height = (rand() % 500) + 500;
+      spriteBee.setPosition({1940, height});
+      beeActive = true;
+    } else {
+      auto x = spriteBee.getPosition().x - (beeSpeed * dt.asSeconds());
+      auto y = spriteBee.getPosition().y;
+      spriteBee.setPosition({x, y});
+
+      if (spriteBee.getPosition().x < -100) {
+        beeActive = false;
+      }
+    }
 
     // draw sprites here
     window.draw(spriteBackground);
