@@ -37,6 +37,10 @@ int main() {
     return 1;
   }
 
+  bool cloudActive1 = false;
+  bool cloudActive2 = false;
+  bool cloudActive3 = false;
+
   float cloudSpeed1 = 0.0f;
   float cloudSpeed2 = 0.0f;
   float cloudSpeed3 = 0.0f;
@@ -88,6 +92,66 @@ int main() {
 
       if (spriteBee.getPosition().x < -100) {
         beeActive = false;
+      }
+    }
+
+    if (!cloudActive1) {
+      // How fast is the cloud
+      srand((int)time(0) * 10);
+      cloudSpeed1 = (rand() % 250);
+
+      // How high is the cloud
+      srand((int)time(0) * 20);
+      float height = (rand() % 300) - 150;
+      spriteCloud1.setPosition({-200, height});
+      cloudActive1 = true;
+    } else {
+      auto x = spriteCloud1.getPosition().x + (cloudSpeed1 * dt.asSeconds());
+      auto y = spriteCloud1.getPosition().y;
+      spriteCloud1.setPosition({x, y});
+
+      if (spriteCloud1.getPosition().x > 1920) {
+        cloudActive1 = false;
+      }
+    }
+
+    if (!cloudActive2) {
+      // How fast is the cloud
+      srand((int)time(0) * 10);
+      cloudSpeed2 = (rand() % 280);
+
+      // How high is the cloud
+      srand((int)time(0) * 30);
+      float height = (rand() % 450) - 150;
+      spriteCloud2.setPosition({-200, height});
+      cloudActive2 = true;
+    } else {
+      auto x = spriteCloud2.getPosition().x + (cloudSpeed2 * dt.asSeconds());
+      auto y = spriteCloud2.getPosition().y;
+      spriteCloud2.setPosition({x, y});
+
+      if (spriteCloud2.getPosition().x > 1920) {
+        cloudActive2 = false;
+      }
+    }
+
+    if (!cloudActive3) {
+      // How fast is the cloud
+      srand((int)time(0) * 10);
+      cloudSpeed3 = (rand() % 200);
+
+      // How high is the cloud
+      srand((int)time(0) * 10);
+      float height = (rand() % 150);
+      spriteCloud3.setPosition({-200, height});
+      cloudActive3 = true;
+    } else {
+      auto x = spriteCloud3.getPosition().x + (cloudSpeed3 * dt.asSeconds());
+      auto y = spriteCloud3.getPosition().y;
+      spriteCloud3.setPosition({x, y});
+
+      if (spriteCloud3.getPosition().x > 1920) {
+        cloudActive3 = false;
       }
     }
 
