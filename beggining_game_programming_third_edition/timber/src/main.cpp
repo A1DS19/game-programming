@@ -72,13 +72,13 @@ int main() {
   const auto onKeyPressed = [&](const sf::Event::KeyPressed &keyPressed) {
     if (keyPressed.scancode == sf::Keyboard::Scancode::Escape) {
       window.close();
-      score = 0;
-      timeRemaining = 6.0f;
     }
 
     if (keyPressed.scancode == sf::Keyboard::Scancode::Enter &&
         paused == true) {
       paused = false;
+      score = 0;
+      timeRemaining = 6.0f;
     }
   };
 
@@ -97,7 +97,7 @@ int main() {
 
       if (timeRemaining <= 0.0f) {
         paused = true;
-        startGameText.setString("Out of time!");
+        startGameText.setString("Out of time! Press Enter to restart");
         auto bounds = startGameText.getLocalBounds();
         sf::Vector2f localCenter{bounds.position.x + bounds.size.x * 0.5f,
                                  bounds.position.y + bounds.size.y * 0.5f};
