@@ -1,5 +1,4 @@
 #include "actor.hpp"
-#include "events.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -20,25 +19,28 @@ int main() {
     std::cerr << "font: " << fontFilePath << "not found" << std::endl;
   }
 
-  sf::Text startGameText(font);
-  startGameText.setCharacterSize(75);
-  startGameText.setFillColor(sf::Color::White);
-  startGameText.setString("Press Enter to start");
+  sf::Text centerMessage(font);
+  centerMessage.setCharacterSize(75);
+  centerMessage.setFillColor(sf::Color::White);
+  centerMessage.setString("Press Enter to start");
 
-  // 1) Get the text’s local bounds (position & size):
-  auto bounds = startGameText.getLocalBounds();
-  //    bounds.position == top-left within the glyphs
-  //    bounds.size     == width/height of the glyphs
+  const auto centerGameMessage = [&centerMessage, &window]() {
+    // 1) Get the text’s local bounds (position & size):
+    auto bounds = centerMessage.getLocalBounds();
+    //    bounds.position == top-left within the glyphs
+    //    bounds.size     == width/height of the glyphs
 
-  // 2) Compute and set the origin to the very center of those bounds:
-  sf::Vector2f localCenter{bounds.position.x + bounds.size.x * 0.5f,
-                           bounds.position.y + bounds.size.y * 0.5f};
-  startGameText.setOrigin(localCenter);
+    // 2) Compute and set the origin to the very center of those bounds:
+    sf::Vector2f localCenter{bounds.position.x + bounds.size.x * 0.5f,
+                             bounds.position.y + bounds.size.y * 0.5f};
+    centerMessage.setOrigin(localCenter);
 
-  // 3) Get the window size and position the text at its center:
-  sf::Vector2u winSize = window.getSize();
-  sf::Vector2f windowCenter{winSize.x / 2.0f, winSize.y / 2.0f};
-  startGameText.setPosition(windowCenter);
+    // 3) Get the window size and position the text at its center:
+    sf::Vector2u winSize = window.getSize();
+    sf::Vector2f windowCenter{winSize.x / 2.0f, winSize.y / 2.0f};
+    centerMessage.setPosition(windowCenter);
+  };
+  centerGameMessage();
 
   sf::Text scoreText(font);
   scoreText.setCharacterSize(100);
@@ -97,14 +99,7 @@ int main() {
 
       if (timeRemaining <= 0.0f) {
         paused = true;
-        startGameText.setString("Out of time! Press Enter to restart");
-        auto bounds = startGameText.getLocalBounds();
-        sf::Vector2f localCenter{bounds.position.x + bounds.size.x * 0.5f,
-                                 bounds.position.y + bounds.size.y * 0.5f};
-        startGameText.setOrigin(localCenter);
-        sf::Vector2u winSize = window.getSize();
-        sf::Vector2f windowCenter{winSize.x / 2.0f, winSize.y / 2.0f};
-        startGameText.setPosition(windowCenter);
+        centerGameMessage();
       }
 
       if (!bee.active) {
@@ -147,7 +142,7 @@ int main() {
     }
 
     if (paused) {
-      window.draw(startGameText);
+      window.draw(centerMessage);
     }
 
     window.draw(scoreText);
