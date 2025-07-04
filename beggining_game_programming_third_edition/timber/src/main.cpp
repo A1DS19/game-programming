@@ -99,6 +99,7 @@ int main() {
 
       if (timeRemaining <= 0.0f) {
         paused = true;
+        centerMessage.setString("Out of time! Press Enter to restart");
         centerGameMessage();
       }
 
