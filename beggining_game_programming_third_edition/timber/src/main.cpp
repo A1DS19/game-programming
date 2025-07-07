@@ -158,15 +158,15 @@ int main() {
     window.draw(*background.sprite);
 
     if (!paused) {
+      for (unsigned int i = 0; i < Branches::Constants::MAX; i++) {
+        window.draw(*Branches::branches[i].sprite);
+      }
       window.draw(*tree.sprite);
       window.draw(*bee.sprite);
       window.draw(*cloud1.sprite);
       window.draw(*cloud2.sprite);
       window.draw(*cloud3.sprite);
       window.draw(timeBar);
-      for (unsigned int i = 0; i < Branches::Constants::MAX; i++) {
-        window.draw(*Branches::branches[i].sprite);
-      }
     }
 
     if (paused) {
