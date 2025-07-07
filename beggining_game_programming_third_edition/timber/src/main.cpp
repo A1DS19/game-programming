@@ -1,7 +1,9 @@
 #include "actor.hpp"
+#include "branch.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <ostream>
 #include <sstream>
 #include <string>
 
@@ -45,7 +47,7 @@ int main() {
   sf::Text scoreText(font);
   scoreText.setCharacterSize(100);
   scoreText.setFillColor(sf::Color::White);
-  scoreText.setString("Score = 1000");
+  scoreText.setString("Score = 0");
   scoreText.setPosition({20, 20});
 
   sf::RectangleShape timeBar;
@@ -61,6 +63,8 @@ int main() {
   sf::Time gameTimeTotal;
   float timeRemaining = 6.0f;
   float timeBarWPerSecond = timeBarStartW / timeRemaining;
+
+  Branches::CreateBranches();
 
   Actor background("../assets/graphics/background.png", {0, 0});
   Actor tree("../assets/graphics/tree2.png", {810, 0});
@@ -84,12 +88,32 @@ int main() {
     }
   };
 
+  Branches::UpdateBranches(1);
+  Branches::UpdateBranches(2);
+  Branches::UpdateBranches(3);
+  Branches::UpdateBranches(4);
+  Branches::UpdateBranches(5);
+
   while (window.isOpen()) {
     window.handleEvents(onClose, onKeyPressed);
 
     std::stringstream ss;
     ss << "Score = " << score;
     scoreText.setString(ss.str());
+
+    for (unsigned int i = 0; i < Branches::Constants::MAX; i++) {
+      float height = i * 150;
+
+      if (Branches::branchPositions[i] == Branch::Side::LEFT) {
+        Branches::branches[i].sprite->setPosition({810, height});
+        Branches::branches[i].sprite->setRotation(sf::degrees(180.0f));
+      } else if (Branches::branchPositions[i] == Branch::Side::RIGHT) {
+        Branches::branches[i].sprite->setPosition({1100, height});
+        Branches::branches[i].sprite->setRotation(sf::degrees(0.0f));
+      } else {
+        Branches::branches[i].sprite->setPosition({3000, height});
+      }
+    }
 
     if (!paused) {
       sf::Time dt = clock.restart();
@@ -140,6 +164,9 @@ int main() {
       window.draw(*cloud2.sprite);
       window.draw(*cloud3.sprite);
       window.draw(timeBar);
+      for (unsigned int i = 0; i < Branches::Constants::MAX; i++) {
+        window.draw(*Branches::branches[i].sprite);
+      }
     }
 
     if (paused) {
