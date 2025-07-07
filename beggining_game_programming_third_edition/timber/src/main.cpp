@@ -1,5 +1,9 @@
 #include "actor.hpp"
+#include "axe.hpp"
 #include "branch.hpp"
+#include "log.hpp"
+#include "player.hpp"
+#include "rip.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -55,8 +59,8 @@ int main() {
   float timeBarH = 50.0f;
   timeBar.setSize({timeBarStartW, timeBarH});
   timeBar.setFillColor(sf::Color::Red);
-  auto size = window.getSize();              // e.g. {1920, 1080}
-  float x = (size.x - timeBarStartW) * 0.5f; // center horizontally
+  auto size = window.getSize();                      // e.g. {1920, 1080}
+  float x = ((size.x - timeBarStartW) + 480) * 0.5f; // center horizontally
   float y = (size.y - 10.0f) - timeBarH; // align top of bar at bottom of window
   timeBar.setPosition({x, y});
 
@@ -67,14 +71,19 @@ int main() {
   Branches::CreateBranches();
 
   Actor background("../assets/graphics/background.png", {0, 0});
-  Actor tree("../assets/graphics/tree2.png", {810, 0});
-  Actor bee("../assets/graphics/bee.png", {0, 600});
+  Actor tree("../assets/graphics/tree2.png", {810, -100});
+  Actor bee("../assets/graphics/bee.png", {0, 500});
   Actor cloud1("../assets/graphics/cloud.png", {0, 0});
-  Actor cloud2("../assets/graphics/cloud.png", {0, 180});
-  Actor cloud3("../assets/graphics/cloud.png", {0, 370});
+  Actor cloud2("../assets/graphics/cloud.png", {0, 160});
+  Actor cloud3("../assets/graphics/cloud.png", {0, 350});
+  Axe axe("../assets/graphics/axe.png", {700, 720});
+  Player player("../assets/graphics/player.png", {580, 600});
+  Log log("../assets/graphics/log.png", {810, 620});
+  Rip rip("../assets/graphics/rip.png", {600, 680});
 
   const auto onClose = [&window](const sf::Event::Closed &) { window.close(); };
 
+  bool acceptInput = false;
   const auto onKeyPressed = [&](const sf::Event::KeyPressed &keyPressed) {
     if (keyPressed.scancode == sf::Keyboard::Scancode::Escape) {
       window.close();
@@ -85,14 +94,21 @@ int main() {
       paused = false;
       score = 0;
       timeRemaining = 6.0f;
+
+      // Make all branches disappear
+      for (unsigned int i = 0; i < Branches::Constants::MAX; i++) {
+        Branches::branchPositions[i] = Branch::Side::NONE;
+      }
+
+      // hide gravestone
+      rip.sprite->setPosition({675, 2000});
+
+      // move player to position
+      player.sprite->setPosition({580, 600});
+
+      acceptInput = true;
     }
   };
-
-  Branches::UpdateBranches(1);
-  Branches::UpdateBranches(2);
-  Branches::UpdateBranches(3);
-  Branches::UpdateBranches(4);
-  Branches::UpdateBranches(5);
 
   while (window.isOpen()) {
     window.handleEvents(onClose, onKeyPressed);
@@ -166,6 +182,10 @@ int main() {
       window.draw(*cloud1.sprite);
       window.draw(*cloud2.sprite);
       window.draw(*cloud3.sprite);
+      window.draw(*player.sprite);
+      window.draw(*axe.sprite);
+      window.draw(*log.sprite);
+      window.draw(*rip.sprite);
       window.draw(timeBar);
     }
 
