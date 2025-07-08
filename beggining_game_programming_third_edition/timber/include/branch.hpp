@@ -1,11 +1,10 @@
 #pragma once
 
 #include "SFML/Graphics.hpp"
+#include "game.hpp"
 #include <array>
 
 struct Branch {
-  enum class Side { LEFT, RIGHT, NONE };
-
   Branch();
   void UpdateBranch(int seed);
 
@@ -28,6 +27,6 @@ constexpr unsigned int MAX = 6;
 
 void CreateBranches();
 void UpdateBranches(int seed);
-extern std::array<Branch::Side, Branches::Constants::MAX> branchPositions;
+extern std::array<Game::Side, Branches::Constants::MAX> branchPositions;
 extern std::array<Branch, Branches::Constants::MAX> branches;
 }; // namespace Branches

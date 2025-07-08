@@ -14,7 +14,7 @@ Branch::Branch() : texture(std::make_unique<sf::Texture>()) {
 }
 
 namespace Branches {
-std::array<Branch::Side, Constants::MAX> branchPositions{};
+std::array<Game::Side, Constants::MAX> branchPositions{};
 std::array<Branch, Constants::MAX> branches{};
 
 void CreateBranches() {
@@ -34,13 +34,13 @@ void UpdateBranches(int seed) {
 
   switch (r) {
   case 0:
-    branchPositions[0] = Branch::Side::LEFT;
+    branchPositions[0] = Game::Side::LEFT;
     break;
   case 1:
-    branchPositions[0] = Branch::Side::RIGHT;
+    branchPositions[0] = Game::Side::RIGHT;
     break;
   default:
-    branchPositions[0] = Branch::Side::NONE;
+    branchPositions[0] = Game::Side::NONE;
     break;
   }
 }

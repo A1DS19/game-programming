@@ -97,7 +97,7 @@ int main() {
 
       // Make all branches disappear
       for (unsigned int i = 0; i < Branches::Constants::MAX; i++) {
-        Branches::branchPositions[i] = Branch::Side::NONE;
+        Branches::branchPositions[i] = Game::Side::NONE;
       }
 
       // hide gravestone
@@ -112,7 +112,7 @@ int main() {
 
     if (acceptInput) {
       if (keyPressed.scancode == sf::Keyboard::Scancode::Right && !paused) {
-        player.side = Player::Side::RIGHT;
+        player.side = Game::Side::RIGHT;
         score++;
         timeRemaining += (2.0f / score) + 0.15f;
         axe.sprite->setPosition(
@@ -126,7 +126,7 @@ int main() {
       }
 
       if (keyPressed.scancode == sf::Keyboard::Scancode::Left && !paused) {
-        player.side = Player::Side::LEFT;
+        player.side = Game::Side::LEFT;
         score++;
         timeRemaining += (2.0f / score) + 0.15f;
         axe.sprite->setPosition(
@@ -158,10 +158,10 @@ int main() {
     for (unsigned int i = 0; i < Branches::Constants::MAX; i++) {
       float height = i * 150;
 
-      if (Branches::branchPositions[i] == Branch::Side::LEFT) {
+      if (Branches::branchPositions[i] == Game::Side::LEFT) {
         Branches::branches[i].sprite->setPosition({810, height});
         Branches::branches[i].sprite->setRotation(sf::degrees(180.0f));
-      } else if (Branches::branchPositions[i] == Branch::Side::RIGHT) {
+      } else if (Branches::branchPositions[i] == Game::Side::RIGHT) {
         Branches::branches[i].sprite->setPosition({1100, height});
         Branches::branches[i].sprite->setRotation(sf::degrees(0.0f));
       } else {
@@ -215,6 +215,18 @@ int main() {
           log.active = false;
           log.sprite->setPosition({810, 620});
         }
+      }
+
+      if (Branches::branchPositions[5] == player.side) {
+        // death
+        paused = true;
+        acceptInput = false;
+
+        rip.sprite->setPosition({580, 600});
+        player.sprite->setPosition({2000, 600});
+
+        centerMessage.setString("SQUISHED!");
+        centerGameMessage();
       }
     }
 
