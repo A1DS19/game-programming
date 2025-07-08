@@ -105,13 +105,51 @@ int main() {
 
       // move player to position
       player.sprite->setPosition({580, 600});
+      axe.sprite->setPosition({700, 720});
 
       acceptInput = true;
+    }
+
+    if (acceptInput) {
+      if (keyPressed.scancode == sf::Keyboard::Scancode::Right && !paused) {
+        player.side = Player::Side::RIGHT;
+        score++;
+        timeRemaining += (2.0f / score) + 0.15f;
+        axe.sprite->setPosition(
+            {Axes::AXE_POSITION_RIGHT, axe.sprite->getPosition().y});
+        player.sprite->setPosition({1200, 600});
+        Branches::UpdateBranches(score);
+        log.sprite->setPosition({810, 720});
+        log.speedX = -5000;
+        log.active = true;
+        acceptInput = false;
+      }
+
+      if (keyPressed.scancode == sf::Keyboard::Scancode::Left && !paused) {
+        player.side = Player::Side::LEFT;
+        score++;
+        timeRemaining += (2.0f / score) + 0.15f;
+        axe.sprite->setPosition(
+            {Axes::AXE_POSITION_LEFT, axe.sprite->getPosition().y});
+        player.sprite->setPosition({580, 600});
+        Branches::UpdateBranches(score);
+        log.sprite->setPosition({810, 720});
+        log.speedX = 5000;
+        log.active = true;
+        acceptInput = false;
+      }
+    }
+  };
+
+  const auto onKeyReleased = [&](const sf::Event::KeyReleased &keyReleased) {
+    if (!paused) {
+      acceptInput = true;
+      axe.sprite->setPosition({2000, axe.sprite->getPosition().y});
     }
   };
 
   while (window.isOpen()) {
-    window.handleEvents(onClose, onKeyPressed);
+    window.handleEvents(onClose, onKeyPressed, onKeyReleased);
 
     std::stringstream ss;
     ss << "Score = " << score;
@@ -165,6 +203,18 @@ int main() {
         cloud3.Initialize(200, 550, 10, -200);
       } else {
         cloud3.Move(dt, 1920, Actor::Direction::ERigth);
+      }
+
+      if (log.active) {
+        log.sprite->setPosition(
+            {log.sprite->getPosition().x + (log.speedX * dt.asSeconds()),
+             log.sprite->getPosition().y + (log.speedY * dt.asSeconds())});
+
+        if (log.sprite->getPosition().x < -100 ||
+            log.sprite->getPosition().x > 2000) {
+          log.active = false;
+          log.sprite->setPosition({810, 620});
+        }
       }
     }
 
