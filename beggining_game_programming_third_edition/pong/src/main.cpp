@@ -1,10 +1,8 @@
 #include "main.hpp"
 
-void hello() {
-    std::cout << "Hello, World!" << std::endl;
-}
+void hello() { std::cout << "Hello, World!" << std::endl; }
 
 int main() {
-    hello();
-    return EXIT_SUCCESS;
+  hello();
+  return EXIT_SUCCESS;
 }
