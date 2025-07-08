@@ -4,6 +4,7 @@
 #include "log.hpp"
 #include "player.hpp"
 #include "rip.hpp"
+#include "sound.hpp"
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
@@ -19,6 +20,10 @@ int main() {
   bool paused = true;
   int score = 0;
   sf::Font font;
+
+  auto chop = Sound("../assets/sound/chop.wav");
+  auto death = Sound("../assets/sound/death.wav");
+  auto oot = Sound("../assets/sound/out_of_time.wav");
 
   std::string fontFilePath = "../assets/fonts/KOMIKAP_.ttf";
   if (!font.openFromFile(fontFilePath)) {
@@ -123,6 +128,7 @@ int main() {
         log.speedX = -5000;
         log.active = true;
         acceptInput = false;
+        chop.sound.play();
       }
 
       if (keyPressed.scancode == sf::Keyboard::Scancode::Left && !paused) {
@@ -137,6 +143,7 @@ int main() {
         log.speedX = 5000;
         log.active = true;
         acceptInput = false;
+        chop.sound.play();
       }
     }
   };
@@ -177,6 +184,7 @@ int main() {
 
       if (timeRemaining <= 0.0f) {
         paused = true;
+        oot.sound.play();
         centerMessage.setString("Out of time! Press Enter to restart");
         centerGameMessage();
       }
@@ -225,6 +233,7 @@ int main() {
         rip.sprite->setPosition({580, 600});
         player.sprite->setPosition({2000, 600});
 
+        death.sound.play();
         centerMessage.setString("SQUISHED!");
         centerGameMessage();
       }
