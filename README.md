@@ -5,6 +5,6 @@
 - Make sure [sfml](https://formulae.brew.sh/formula/sfml) is install in your system.
 - `cd build/ && cmake  .. && make && ../bin/main`
 
-![Timber](https://github.com/A1DS19/game-programming/blob/main/screenshots/timber.jpeg)
+![Timber](https://github.com/A1DS19/game-programming/blob/main/screenshots/timber.png)
 #### Timber
 - Move with left-right keys, try to evade branches. The goal is to accumulate points.
