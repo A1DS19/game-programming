@@ -10,8 +10,7 @@ Game::Game()
 
   mResolution = {float(x), float(y)};
   mWindow = sf::RenderWindow(sf::VideoMode({x, y}), "Zombie Arena");
-  mMainView = sf::View(sf::FloatRect(
-      {0.f, 0.f}, {static_cast<float>(x), static_cast<float>(y)}));
+  mMainView = sf::View(sf::FloatRect({0.f, 0.f}, {float(x), float(y)}));
 }
 
 void Game::Update() {
