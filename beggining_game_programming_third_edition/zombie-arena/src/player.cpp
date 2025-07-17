@@ -1,7 +1,7 @@
 #include "player.h"
 #include <SFML/Graphics.hpp>
-#include <algorithm> // for std::clamp
-#include <cmath>     // for std::atan2
+#include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 
