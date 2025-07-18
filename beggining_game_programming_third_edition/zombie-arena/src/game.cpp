@@ -1,16 +1,24 @@
 #include "game.h"
+#include "arena.h"
 #include "player.h"
+#include <iostream>
 
 Game::Game()
     : mState(Game::State::GameOver), mClock(sf::Clock()),
       mGameTimeTotal(sf::Time()), mMouseWorldPosition({0, 0}),
-      mMouseScreenPosition({0, 0}), mPlayer(Player()), mArena() {
+      mMouseScreenPosition({0, 0}), mPlayer(Player()), mArena(), mBackground(),
+      mTextureBackground() {
   auto x = sf::VideoMode::getDesktopMode().size.x;
   auto y = sf::VideoMode::getDesktopMode().size.y;
 
   mResolution = {float(x), float(y)};
   mWindow = sf::RenderWindow(sf::VideoMode({x, y}), "Zombie Arena");
   mMainView = sf::View(sf::FloatRect({0.f, 0.f}, {float(x), float(y)}));
+
+  if (!mTextureBackground.loadFromFile(
+          "../assets/graphics/background_sheet.png")) {
+    std::cerr << "Background sheet loading error" << std::endl;
+  }
 }
 
 void Game::Update() {
@@ -40,7 +48,8 @@ void Game::Update() {
 void Game::Draw() {
   mWindow.clear();
 
-  mWindow.setView(mWindow.getDefaultView());
+  mWindow.setView(mMainView);
+  mWindow.draw(mBackground, &mTextureBackground);
   mWindow.draw(mPlayer.GetSprite());
 
   mWindow.display();
@@ -127,7 +136,7 @@ Events Game::Events() {
         mArena.position.x = 0;
         mArena.position.y = 0;
 
-        int tileSize = 50;
+        int tileSize = createBackground(mBackground, mArena);
 
         // Spawn  player in middle of the arena
         mPlayer.Spawn(mArena, mResolution, tileSize);

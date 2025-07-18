@@ -34,4 +34,7 @@ struct Game {
   Player mPlayer;
   // The boundaries of the arena
   sf::IntRect mArena;
+
+  sf::VertexArray mBackground;
+  sf::Texture mTextureBackground;
 };
