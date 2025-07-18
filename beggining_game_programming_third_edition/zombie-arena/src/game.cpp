@@ -41,6 +41,8 @@ void Game::Update() {
     mPlayer.Update(dtAsSeconds, pixelPos);
 
     sf::Vector2f playerPosition(mPlayer.GetCenter());
+
+    // recenter camera on view when moving
     mMainView.setCenter(mPlayer.GetCenter());
   }
 }
