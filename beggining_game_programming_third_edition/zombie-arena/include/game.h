@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SFML/Graphics.hpp"
+#include "arena.h"
 #include "player.h"
 #include <tuple>
 
@@ -37,4 +38,8 @@ struct Game {
 
   sf::VertexArray mBackground;
   sf::Texture mTextureBackground;
+
+  int mNumZombies;
+  int mNumZombiesAlive;
+  Horde mHorde;
 };

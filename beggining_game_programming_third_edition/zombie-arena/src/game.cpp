@@ -7,7 +7,7 @@ Game::Game()
     : mState(Game::State::GameOver), mClock(sf::Clock()),
       mGameTimeTotal(sf::Time()), mMouseWorldPosition({0, 0}),
       mMouseScreenPosition({0, 0}), mPlayer(Player()), mArena(), mBackground(),
-      mTextureBackground() {
+      mTextureBackground(), mNumZombies(0), mNumZombiesAlive(0) {
   auto x = sf::VideoMode::getDesktopMode().size.x;
   auto y = sf::VideoMode::getDesktopMode().size.y;
 
@@ -44,6 +44,12 @@ void Game::Update() {
 
     // recenter camera on view when moving
     mMainView.setCenter(mPlayer.GetCenter());
+
+    for (size_t i = 0; i < mNumZombies; i++) {
+      if (mHorde[i]->IsAlive()) {
+        mHorde[i]->Update(dtAsSeconds, playerPosition);
+      }
+    }
   }
 }
 
@@ -53,6 +59,9 @@ void Game::Draw() {
   mWindow.setView(mMainView);
   mWindow.draw(mBackground, &mTextureBackground);
   mWindow.draw(mPlayer.GetSprite());
+  for (size_t i = 0; i < mNumZombies; i++) {
+    mWindow.draw(mHorde[i]->GetSprite());
+  }
 
   mWindow.display();
 }
@@ -142,6 +151,10 @@ Events Game::Events() {
 
         // Spawn  player in middle of the arena
         mPlayer.Spawn(mArena, mResolution, tileSize);
+
+        mNumZombies = 10;
+        mHorde = createHorde(mNumZombies, mArena);
+        mNumZombiesAlive = mNumZombies;
 
         // Reset clock to prevent frame jump
         mClock.restart();
