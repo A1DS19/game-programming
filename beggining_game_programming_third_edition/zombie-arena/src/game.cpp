@@ -7,13 +7,22 @@ Game::Game()
     : mState(Game::State::GameOver), mClock(sf::Clock()),
       mGameTimeTotal(sf::Time()), mMouseWorldPosition({0, 0}),
       mMouseScreenPosition({0, 0}), mPlayer(Player()), mArena(), mBackground(),
-      mTextureBackground(), mNumZombies(0), mNumZombiesAlive(0) {
+      mTextureBackground(), mNumZombies(0), mNumZombiesAlive(0),
+      mCurrentBullet(0), mBulletsSpare(24), mBulletsInClip(6), mClipSize(6),
+      mFireRate(1), mCrosshairTexture(), mCrosshairSprite(mCrosshairTexture) {
   auto x = sf::VideoMode::getDesktopMode().size.x;
   auto y = sf::VideoMode::getDesktopMode().size.y;
 
   mResolution = {float(x), float(y)};
   mWindow = sf::RenderWindow(sf::VideoMode({x, y}), "Zombie Arena");
   mMainView = sf::View(sf::FloatRect({0.f, 0.f}, {float(x), float(y)}));
+  mWindow.setMouseCursorVisible(true);
+
+  if (!mCrosshairTexture.loadFromFile("../assets/graphics/crosshair.png")) {
+    std::cerr << "could not load crosshair" << std::endl;
+  }
+  mCrosshairSprite.setTexture(mCrosshairTexture, true);
+  mCrosshairSprite.setOrigin({25, 25});
 
   if (!mTextureBackground.loadFromFile(
           "../assets/graphics/background_sheet.png")) {
@@ -38,6 +47,8 @@ void Game::Update() {
 
     mMouseWorldPosition = mWindow.mapPixelToCoords(pixelPos, mMainView);
 
+    mCrosshairSprite.setPosition(mMouseWorldPosition);
+
     mPlayer.Update(dtAsSeconds, pixelPos);
 
     sf::Vector2f playerPosition(mPlayer.GetCenter());
@@ -50,6 +61,12 @@ void Game::Update() {
         mHorde[i]->Update(dtAsSeconds, playerPosition);
       }
     }
+
+    for (size_t i = 0; i < 100; i++) {
+      if (mBullets[i].IsInFlight()) {
+        mBullets[i].Update(dtAsSeconds);
+      }
+    }
   }
 }
 
@@ -59,8 +76,15 @@ void Game::Draw() {
   mWindow.setView(mMainView);
   mWindow.draw(mBackground, &mTextureBackground);
   mWindow.draw(mPlayer.GetSprite());
+  mWindow.draw(mCrosshairSprite);
+
   for (size_t i = 0; i < mNumZombies; i++) {
     mWindow.draw(mHorde[i]->GetSprite());
+  }
+  for (size_t i = 0; i < 100; i++) {
+    if (mBullets[i].IsInFlight()) {
+      mWindow.draw(mBullets[i].GetShape());
+    }
   }
 
   mWindow.display();
@@ -113,6 +137,36 @@ Events Game::Events() {
         mPlayer.Move(Player::Movement::Right);
       } else {
         mPlayer.Stop(Player::Movement::Right);
+      }
+
+      if (keyPress.scancode == sf::Keyboard::Scancode::R) {
+        if (mBulletsSpare >= mClipSize) {
+          mBulletsInClip = mClipSize;
+          mBulletsSpare -= mClipSize;
+        } else if (mBulletsSpare > 0) {
+          mBulletsInClip = mBulletsSpare;
+          mBulletsSpare = 0;
+        } else {
+          // More?
+        }
+      }
+
+      if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) ||
+          sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+        if (mGameTimeTotal.asMilliseconds() -
+                    mTriggerLastPressed.asMilliseconds() >
+                1000.f / mFireRate &&
+            mBulletsInClip > 0) {
+          mBullets[mCurrentBullet].Shoot(
+              mPlayer.GetCenter().x, mPlayer.GetCenter().y,
+              mMouseWorldPosition.x, mMouseWorldPosition.y);
+          mCurrentBullet++;
+          if (mCurrentBullet > 99) {
+            mCurrentBullet = 0;
+          }
+          mTriggerLastPressed = mGameTimeTotal;
+          mBulletsInClip--;
+        }
       }
     }
 

@@ -2,6 +2,7 @@
 
 #include "SFML/Graphics.hpp"
 #include "arena.h"
+#include "bullet.h"
 #include "player.h"
 #include <tuple>
 
@@ -42,4 +43,15 @@ struct Game {
   int mNumZombies;
   int mNumZombiesAlive;
   Horde mHorde;
+
+  Bullet mBullets[100];
+  int mCurrentBullet;
+  int mBulletsSpare;
+  int mBulletsInClip;
+  int mClipSize;
+  float mFireRate;
+  sf::Time mTriggerLastPressed;
+
+  sf::Texture mCrosshairTexture;
+  sf::Sprite mCrosshairSprite;
 };
