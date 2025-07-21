@@ -13,6 +13,6 @@
 #### Pong
 - Move with left-right keys, try to intersect the ball, dont let go below the padel.
 
-![Zombie arena](https://github.com/A1DS19/game-programming/blob/main/screenshots/zombie.png)
+![Zombie arena](https://github.com/A1DS19/game-programming/blob/main/screenshots/zombies.png)
 #### Zombie arena
 - Move with WASD and shoot zombies.
