@@ -18,6 +18,7 @@ struct Game {
   void Draw();
   // using auto also works here instead of Events.
   Events Events();
+  void UpdateHUD();
 
   sf::RenderWindow mWindow;
   State mState;
@@ -54,4 +55,26 @@ struct Game {
 
   sf::Texture mCrosshairTexture;
   sf::Sprite mCrosshairSprite;
+
+  int mScore;
+  int mHighScore;
+
+  sf::Texture mGameOverTexture;
+  sf::Sprite mGameOverSprite;
+  sf::View mHudView;
+  sf::Sprite mSpriteAmmoIcon;
+  sf::Texture mTextureAmmoIcon;
+  sf::Font mFont;
+  sf::Text mPausedText;
+  sf::Text mGameOverText;
+  sf::Text mLevelUpText;
+  sf::Text mAmmoText;
+  sf::Text mScoreText;
+  sf::Text mHiScoreText;
+  sf::Text mZombiesRemainingText;
+  sf::Text mWaveNumberText;
+  sf::RectangleShape mHealthBar;
+  int mWave;
+  int mFramesSinceLastHUDUpdate;
+  int mFpsMeasurementFrameInterval;
 };
