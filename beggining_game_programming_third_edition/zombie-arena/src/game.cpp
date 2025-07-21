@@ -17,7 +17,9 @@ Game::Game()
       mSpriteAmmoIcon(mTextureAmmoIcon), mFont(), mPausedText(mFont),
       mGameOverText(mFont), mLevelUpText(mFont), mAmmoText(mFont),
       mScoreText(mFont), mHiScoreText(mFont), mZombiesRemainingText(mFont),
-      mWaveNumberText(mFont), mHealthBar(), mWave(0) {
+      mWaveNumberText(mFont), mHealthBar(), mWave(0),
+      mFramesSinceLastHUDUpdate(0), mFpsMeasurementFrameInterval(1000) {
+
   auto x = sf::VideoMode::getDesktopMode().size.x;
   auto y = sf::VideoMode::getDesktopMode().size.y;
 
