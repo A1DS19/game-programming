@@ -286,9 +286,10 @@ Events Game::Events() {
 
       if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) ||
           sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
-        if (mGameTimeTotal.asMilliseconds() -
-                    mTriggerLastPressed.asMilliseconds() >
-                1000.f / mFireRate &&
+        if ((mTriggerLastPressed == sf::Time() ||
+             mGameTimeTotal.asMilliseconds() -
+                     mTriggerLastPressed.asMilliseconds() >
+                 1000.f / mFireRate) &&
             mBulletsInClip > 0) {
           mBullets[mCurrentBullet].Shoot(
               mPlayer.GetCenter().x, mPlayer.GetCenter().y,
