@@ -1,4 +1,3 @@
-#include "main.h"
 #include "Factory.h"
 #include "GameObject.h"
 #include "InputDispatcher.h"
