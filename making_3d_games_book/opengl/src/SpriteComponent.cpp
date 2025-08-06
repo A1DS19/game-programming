@@ -6,6 +6,7 @@
 #include "Math.hpp"
 #include "SDL_rect.h"
 #include "SDL_render.h"
+#include "Shader.hpp"
 
 SpriteComponent::SpriteComponent(Actor *owner, int drawOrder)
     : Component(owner), mTexture(nullptr), mDrawOrder(drawOrder), mTexWidth(0),
@@ -15,22 +16,23 @@ SpriteComponent::SpriteComponent(Actor *owner, int drawOrder)
 
 SpriteComponent::~SpriteComponent() { mOwner->GetGame()->RemoveSprite(this); }
 
-void SpriteComponent::Draw(SDL_Renderer *renderer) {
-  if (mTexture) {
-    SDL_Rect r;
-    // Scales the texture depending on the owners scale.
-    r.w = static_cast<int>(mTexWidth * mOwner->GetScale());
-    r.h = static_cast<int>(mTextHeight * mOwner->GetScale());
+void SpriteComponent::Draw(Shader *shader) {
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+  // if (mTexture) {
+  //   SDL_Rect r;
+  //   // Scales the texture depending on the owners scale.
+  //   r.w = static_cast<int>(mTexWidth * mOwner->GetScale());
+  //   r.h = static_cast<int>(mTextHeight * mOwner->GetScale());
 
-    // Center rect around position of owner.
-    r.x = static_cast<int>(mOwner->GetPosition().x - r.w / 2);
-    r.y = static_cast<int>(mOwner->GetPosition().y - r.h / 2);
+  //   // Center rect around position of owner.
+  //   r.x = static_cast<int>(mOwner->GetPosition().x - r.w / 2);
+  //   r.y = static_cast<int>(mOwner->GetPosition().y - r.h / 2);
 
-    // Draw.
-    SDL_RenderCopyEx(renderer, mTexture, nullptr, &r,
-                     -Math::ToDegrees(mOwner->GetRotation()), nullptr,
-                     SDL_FLIP_NONE);
-  }
+  //   // Draw.
+  //   SDL_RenderCopyEx(renderer, mTexture, nullptr, &r,
+  //                    -Math::ToDegrees(mOwner->GetRotation()), nullptr,
+  //                    SDL_FLIP_NONE);
+  // }
 }
 
 void SpriteComponent::SetTexture(SDL_Texture *texture) {

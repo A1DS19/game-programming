@@ -46,12 +46,21 @@ FetchContent_Declare(SDL_image
 )
 FetchContent_MakeAvailable(SDL_image)
 
-# 10. Link SDL2 to your “main” target
+find_package(GLEW REQUIRED)
+
+# On macOS with Homebrew:
+# brew install GLEW
+
+# On Ubuntu/Debian:
+# sudo apt-get install libglew-dev
+
+# 10. Link SDL2 to your "main" target
 target_link_libraries(main
   PRIVATE
     SDL2::SDL2
     SDL2::SDL2main
     SDL2_image::SDL2_image
+    GLEW::GLEW
 )
 
 # 11. Custom target to generate .clang_complete

@@ -5,14 +5,17 @@
 
 #include "Actor.hpp"
 #include "Asteroid.hpp"
+#include "GL/glew.h"
 #include "SDL_image.h"
 #include "SDL_log.h"
 #include "SDL_render.h"
 #include "SDL_surface.h"
 #include "SDL_timer.h"
 #include "SDL_video.h"
+#include "Shader.hpp"
 #include "Ship.hpp"
 #include "SpriteComponent.hpp"
+#include "VertexArray.hpp"
 
 Game::Game()
     : mWindow{nullptr}, mRenderer{nullptr}, mIsRunning{true},
@@ -25,29 +28,85 @@ bool Game::Initialize() {
     return false;
   }
 
+  // Set OpenGL attributes
+  // Use the core OpenGL profile
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  // Specify version 3.3
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  // Request a color buffer with 8-bits per RGBA channel
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+  // Enable double buffering
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  // Force OpenGL to use hardware acceleration
+  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+
   mWindow =
       SDL_CreateWindow("asteroids", 100, 100, 1024, 768, SDL_WINDOW_OPENGL);
+  mContext = SDL_GL_CreateContext(mWindow);
+  glewExperimental = true;
+  if (glewInit() != GLEW_OK) {
+    SDL_Log("Failed to initialize GLEW");
+    return false;
+  }
+  glGetError();
 
-  if (!mWindow) {
-    SDL_Log("Failed to create window: %s", SDL_GetError());
+  if (!LoadShaders()) {
+    SDL_Log("Failed to load shaders");
     return false;
   }
 
-  mRenderer = SDL_CreateRenderer(
-      mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  CreateSpriteVerts();
 
-  if (!mRenderer) {
-    SDL_Log("Failed to create renderer: %s", SDL_GetError());
-  }
+  // if (!mWindow) {
+  //   SDL_Log("Failed to create window: %s", SDL_GetError());
+  //   return false;
+  // }
 
-  if (IMG_Init(IMG_INIT_PNG) == 0) {
-    SDL_Log("Unable to initialize SDL_Image: %s", SDL_GetError());
-    return false;
-  }
+  // mRenderer = SDL_CreateRenderer(
+  //     mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+  // if (!mRenderer) {
+  //   SDL_Log("Failed to create renderer: %s", SDL_GetError());
+  // }
+
+  // if (IMG_Init(IMG_INIT_PNG) == 0) {
+  //   SDL_Log("Unable to initialize SDL_Image: %s", SDL_GetError());
+  //   return false;
+  // }
 
   LoadData();
   mTicksCount = SDL_GetTicks();
 
+  return true;
+}
+
+void Game::CreateSpriteVerts() {
+  float vertices[] = {
+      -0.5f, 0.5f,  0.f, 0.f, 0.f, // top left
+      0.5f,  0.5f,  0.f, 1.f, 0.f, // top right
+      0.5f,  -0.5f, 0.f, 1.f, 1.f, // bottom right
+      -0.5f, -0.5f, 0.f, 0.f, 1.f  // bottom left
+  };
+
+  unsigned int indices[] = {
+      0, 1, 2, // 1st polygon
+      2, 3, 0  // 2nd polygon
+  };
+
+  mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
+}
+
+bool Game::LoadShaders() {
+  mSpriteShader = new Shader();
+  if (!mSpriteShader->Load("../shaders/Basic.vert", "../shaders/Basic.frag")) {
+    return false;
+  }
+
+  mSpriteShader->SetActive();
   return true;
 }
 
@@ -64,6 +123,7 @@ void Game::Shutdown() {
   IMG_Quit();
   SDL_DestroyRenderer(mRenderer);
   SDL_DestroyWindow(mWindow);
+  SDL_GL_DeleteContext(mContext);
   SDL_Quit();
 }
 
@@ -135,18 +195,18 @@ void Game::UpdateGame() {
 }
 
 void Game::GenerateOutput() {
-  // Set background
-  SDL_SetRenderDrawColor(mRenderer, 220, 220, 220, 255);
-  // Clear back buffer
-  SDL_RenderClear(mRenderer);
+  glClearColor(0.86f, 0.86f, 0.86f, 0.86f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  mSpriteShader->SetActive();
+  mSpriteVerts->SetActive();
 
   // Draw all sprite components
   for (auto sprite : mSprites) {
-    sprite->Draw(mRenderer);
+    sprite->Draw(mSpriteShader);
   }
 
-  // Swap back and front buffers
-  SDL_RenderPresent(mRenderer);
+  SDL_GL_SwapWindow(mWindow);
 }
 
 void Game::AddActor(Actor *actor) {

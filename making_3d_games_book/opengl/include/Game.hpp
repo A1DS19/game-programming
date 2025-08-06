@@ -13,6 +13,8 @@ class Actor;
 class SpriteComponent;
 class Asteroid;
 class Ship;
+class VertexArray;
+class Shader;
 class Game {
 public:
   Game();
@@ -39,14 +41,19 @@ private:
   void GenerateOutput();
   void LoadData();
   void UnloadData();
+  void CreateSpriteVerts();
+  bool LoadShaders();
 
   std::unordered_map<std::string, SDL_Texture *> mTextures;
   std::vector<Actor *> mActors;
   std::vector<Actor *> mPendingActors;
   bool mUpdatingActors;
   std::vector<SpriteComponent *> mSprites;
+  VertexArray *mSpriteVerts;
+  Shader *mSpriteShader;
 
   SDL_Window *mWindow;
+  SDL_GLContext mContext;
   SDL_Renderer *mRenderer;
   Uint32 mTicksCount;
   bool mIsRunning;

@@ -5,13 +5,14 @@
 class Actor;
 struct SDL_Texture;
 struct SDL_Renderer;
+class Shader;
 
 class SpriteComponent : public Component {
 public:
   SpriteComponent(Actor *owner, int drawOrder = 100);
   ~SpriteComponent();
 
-  virtual void Draw(SDL_Renderer *renderer);
+  virtual void Draw(Shader *shader);
   virtual void SetTexture(SDL_Texture *texture);
 
   int GetDrawOrder() const { return mDrawOrder; };
