@@ -7,7 +7,7 @@
 
 Actor::Actor(Game *game)
     : mState(EActive), mPosition(Vector2::Zero), mScale(1.0f), mRotation(0.0f),
-      mGame(game) {
+      mGame(game), mRecomputeWorldTransform(true) {
   mGame->AddActor(this);
 }
 
@@ -67,5 +67,23 @@ void Actor::RemoveComponent(Component *component) {
   auto iter = std::find(mComponents.begin(), mComponents.end(), component);
   if (iter != mComponents.end()) {
     mComponents.erase(iter);
+  }
+}
+
+void Actor::ComputeWorldTransform() {
+  if (mRecomputeWorldTransform) {
+    mRecomputeWorldTransform = false;
+    // Scale.
+    mWorldTransform = Matrix4::CreateScale(mScale);
+    // Rotate.
+    mWorldTransform *= Matrix4::CreateRotationZ(mRotation);
+    // Translate.
+    mWorldTransform *=
+        Matrix4::CreateTranslation(Vector3(mPosition.x, mPosition.y, 0.0f));
+
+    // Inform components world updated.
+    for (auto comp : mComponents) {
+      // comp->OnUpdateWorldTransform();
+    }
   }
 }
