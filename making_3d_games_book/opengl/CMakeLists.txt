@@ -46,6 +46,17 @@ FetchContent_Declare(SDL_image
 )
 FetchContent_MakeAvailable(SDL_image)
 
+# Add stb_image for OpenGL texture loading
+FetchContent_Declare(stb
+  GIT_REPOSITORY https://github.com/nothings/stb
+  GIT_TAG        master
+)
+FetchContent_MakeAvailable(stb)
+
+# Create interface library for stb_image
+add_library(stb_image INTERFACE)
+target_include_directories(stb_image INTERFACE ${stb_SOURCE_DIR})
+
 find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 
@@ -63,6 +74,7 @@ target_link_libraries(main
     SDL2_image::SDL2_image
     GLEW::GLEW
     OpenGL::GL
+    stb_image
 )
 
 # 11. Custom target to generate .clang_complete

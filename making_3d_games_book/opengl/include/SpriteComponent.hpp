@@ -3,8 +3,8 @@
 #include "Component.hpp"
 
 class Actor;
-struct SDL_Texture;
 struct SDL_Renderer;
+class Texture;
 class Shader;
 
 class SpriteComponent : public Component {
@@ -13,14 +13,14 @@ public:
   ~SpriteComponent();
 
   virtual void Draw(Shader *shader);
-  virtual void SetTexture(SDL_Texture *texture);
+  virtual void SetTexture(Texture *texture);
 
   int GetDrawOrder() const { return mDrawOrder; };
   int GetTexHeight() const { return mTextHeight; }
   int GetTexWidght() const { return mTexWidth; }
 
 protected:
-  SDL_Texture *mTexture;
+  Texture *mTexture;
   int mDrawOrder;
   int mTextHeight;
   int mTexWidth;

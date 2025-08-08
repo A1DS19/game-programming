@@ -16,6 +16,7 @@
 #include "Shader.hpp"
 #include "Ship.hpp"
 #include "SpriteComponent.hpp"
+#include "Texture.hpp"
 #include "VertexArray.hpp"
 
 Game::Game()
@@ -110,14 +111,13 @@ void Game::CreateSpriteVerts() {
       2, 3, 0  // 2nd polygon
   };
 
-
   mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
 }
 
 bool Game::LoadShaders() {
   mSpriteShader = new Shader();
-  if (!mSpriteShader->Load("../shaders/Transform.vert",
-                           "../shaders/Basic.frag")) {
+  if (!mSpriteShader->Load("../shaders/Sprite.vert",
+                           "../shaders/Sprite.frag")) {
     return false;
   }
 
@@ -217,9 +217,13 @@ void Game::GenerateOutput() {
   glClearColor(0.86f, 0.86f, 0.86f, 0.86f);
   glClear(GL_COLOR_BUFFER_BIT);
 
+  // Draw all sprite components
+  // Enable alpha blending on the color buffer
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   mSpriteShader->SetActive();
   mSpriteVerts->SetActive();
-
 
   // Draw all sprite components
   for (auto sprite : mSprites) {
@@ -301,34 +305,26 @@ void Game::UnloadData() {
   }
 
   for (auto i : mTextures) {
-    SDL_DestroyTexture(i.second);
+    // SDL_DestroyTexture(i.second);
+    i.second->Unload();
   }
   mTextures.clear();
 }
 
-SDL_Texture *Game::GetTexture(const std::string &filename) {
-  SDL_Texture *tex = nullptr;
+Texture *Game::GetTexture(const std::string &filename) {
+  Texture *tex = nullptr;
 
   auto iter = mTextures.find(filename);
   if (iter != mTextures.end()) {
     tex = iter->second;
   } else {
-    // Load from file.
-    SDL_Surface *surf = IMG_Load(filename.c_str());
-    if (!surf) {
-      SDL_Log("Failed to load texture file: %s", filename.c_str());
-      return nullptr;
+    tex = new Texture();
+    if (tex->Load(filename)) {
+      mTextures.emplace(filename, tex);
+    } else {
+      delete tex;
+      tex = nullptr;
     }
-
-    // Create texture from surface.
-    tex = SDL_CreateTextureFromSurface(mRenderer, surf);
-    SDL_FreeSurface(surf);
-    if (!tex) {
-      // SDL_Log("Failed to convert surface to texture: %s", filename.c_str());
-      return nullptr;
-    }
-
-    mTextures.emplace(filename.c_str(), tex);
   }
 
   return tex;

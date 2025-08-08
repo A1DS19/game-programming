@@ -8,18 +8,18 @@
 
 #include "SDL_stdinc.h"
 
-struct SDL_Texture;
 class Actor;
 class SpriteComponent;
 class Asteroid;
 class Ship;
 class VertexArray;
 class Shader;
+class Texture;
 class Game {
 public:
   static constexpr float SCREEN_WIDTH = 1024.0f;
   static constexpr float SCREEN_HEIGHT = 768.0f;
-  
+
   Game();
   bool Initialize();
   void RunLoop();
@@ -31,7 +31,7 @@ public:
   void AddSprite(SpriteComponent *sprite);
   void RemoveSprite(SpriteComponent *sprite);
 
-  SDL_Texture *GetTexture(const std::string &filename);
+  Texture *GetTexture(const std::string &filename);
 
   // game specific
   void AddAsteroid(Asteroid *asteroid);
@@ -47,7 +47,7 @@ private:
   void CreateSpriteVerts();
   bool LoadShaders();
 
-  std::unordered_map<std::string, SDL_Texture *> mTextures;
+  std::unordered_map<std::string, Texture *> mTextures;
   std::vector<Actor *> mActors;
   std::vector<Actor *> mPendingActors;
   bool mUpdatingActors;

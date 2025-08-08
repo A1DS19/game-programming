@@ -8,6 +8,7 @@
 #include "SDL_rect.h"
 #include "SDL_render.h"
 #include "Shader.hpp"
+#include "Texture.hpp"
 
 SpriteComponent::SpriteComponent(Actor *owner, int drawOrder)
     : Component(owner), mTexture(nullptr), mDrawOrder(drawOrder), mTexWidth(0),
@@ -33,13 +34,15 @@ void SpriteComponent::Draw(Shader *shader) {
   shader->SetMatrixUniform("uWorldTransform", world);
 
   // Set current texture
-  // mTexture->SetActive();
+  mTexture->SetActive();
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
-void SpriteComponent::SetTexture(SDL_Texture *texture) {
+void SpriteComponent::SetTexture(Texture *texture) {
   mTexture = texture;
 
   // Set w/h
-  SDL_QueryTexture(texture, nullptr, nullptr, &mTexWidth, &mTextHeight);
+  // SDL_QueryTexture(texture, nullptr, nullptr, &mTexWidth, &mTextHeight);
+  mTexWidth = texture->GetWidth();
+  mTextHeight = texture->GetHeight();
 }
