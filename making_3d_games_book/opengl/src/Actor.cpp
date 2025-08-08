@@ -1,5 +1,6 @@
 #include "Actor.hpp"
 
+#include <algorithm>
 #include <cstdint>
 
 #include "Component.hpp"

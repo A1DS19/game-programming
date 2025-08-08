@@ -22,10 +22,21 @@ Game::Game()
       mUpdatingActors{false} {}
 
 bool Game::Initialize() {
+  // Try to initialize with audio first
   int sdlResult = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
   if (sdlResult != 0) {
-    SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-    return false;
+    SDL_Log("Failed to initialize with audio: %s", SDL_GetError());
+    SDL_Log("Trying without audio...");
+
+    // Fall back to video only
+    sdlResult = SDL_Init(SDL_INIT_VIDEO);
+    if (sdlResult != 0) {
+      SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
+      return false;
+    }
+    SDL_Log("SDL initialized without audio");
+  } else {
+    SDL_Log("SDL initialized with audio");
   }
 
   // Set OpenGL attributes

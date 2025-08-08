@@ -47,6 +47,7 @@ FetchContent_Declare(SDL_image
 FetchContent_MakeAvailable(SDL_image)
 
 find_package(GLEW REQUIRED)
+find_package(OpenGL REQUIRED)
 
 # On macOS with Homebrew:
 # brew install GLEW
@@ -61,6 +62,7 @@ target_link_libraries(main
     SDL2::SDL2main
     SDL2_image::SDL2_image
     GLEW::GLEW
+    OpenGL::GL
 )
 
 # 11. Custom target to generate .clang_complete

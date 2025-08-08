@@ -2,6 +2,7 @@
 
 #include "Actor.hpp"
 #include "Component.hpp"
+#include "GL/glew.h"
 #include "Game.hpp"
 #include "Math.hpp"
 #include "SDL_rect.h"
