@@ -17,6 +17,9 @@ class VertexArray;
 class Shader;
 class Game {
 public:
+  static constexpr float SCREEN_WIDTH = 1024.0f;
+  static constexpr float SCREEN_HEIGHT = 768.0f;
+  
   Game();
   bool Initialize();
   void RunLoop();

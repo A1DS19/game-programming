@@ -28,8 +28,10 @@ Actor::~Actor() {
 void Actor::Update(float deltaTime) {
   if (mState == EActive) {
     ComputeWorldTransform();
+
     UpdateComponents(deltaTime);
     UpdateActor(deltaTime);
+
     ComputeWorldTransform();
   }
 }

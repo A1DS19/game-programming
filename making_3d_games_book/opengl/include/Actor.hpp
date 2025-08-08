@@ -41,7 +41,7 @@ public:
   State GetState() const { return mState; }
   void SetState(State state) { mState = state; }
   Game *GetGame() { return mGame; }
-  const Matrix4 &GetWorldTransform() const noexcept { return mWorldTransform; }
+  const Matrix4 &GetWorldTransform() const { return mWorldTransform; }
 
   // Add/remove components.
   void AddComponent(Component *component);

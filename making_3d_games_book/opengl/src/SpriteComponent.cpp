@@ -19,8 +19,10 @@ SpriteComponent::~SpriteComponent() { mOwner->GetGame()->RemoveSprite(this); }
 
 void SpriteComponent::Draw(Shader *shader) {
   // Scale the quad by the width/height of texture
-  Matrix4 scaleMat = Matrix4::CreateScale(
-      static_cast<float>(mTexWidth), static_cast<float>(mTextHeight), 1.0f);
+  // If texture failed to load, use default size so sprites are still visible
+  float width = mTexWidth > 0 ? static_cast<float>(mTexWidth) : 64.0f;
+  float height = mTextHeight > 0 ? static_cast<float>(mTextHeight) : 64.0f;
+  Matrix4 scaleMat = Matrix4::CreateScale(width, height, 1.0f);
 
   Matrix4 world = scaleMat * mOwner->GetWorldTransform();
 
@@ -32,8 +34,6 @@ void SpriteComponent::Draw(Shader *shader) {
 
   // Set current texture
   // mTexture->SetActive();
-
-  // Draw quad
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 

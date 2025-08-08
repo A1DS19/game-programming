@@ -2,6 +2,7 @@
 
 #include "Actor.hpp"
 #include "Component.hpp"
+#include "Game.hpp"
 #include "Math.hpp"
 
 MoveComponent::MoveComponent(Actor *owner, int updateOrder)
@@ -20,14 +21,14 @@ void MoveComponent::Update(float deltaTime) {
 
     // (Screen wrapping code only for asteroids)
     if (pos.x < 0.0f) {
-      pos.x = 1022.0f;
-    } else if (pos.x > 1024.0f) {
+      pos.x = Game::SCREEN_WIDTH - 2.0f;
+    } else if (pos.x > Game::SCREEN_WIDTH) {
       pos.x = 2.0f;
     }
 
     if (pos.y < 0.0f) {
-      pos.y = 766.0f;
-    } else if (pos.y > 768.0f) {
+      pos.y = Game::SCREEN_HEIGHT - 2.0f;
+    } else if (pos.y > Game::SCREEN_HEIGHT) {
       pos.y = 2.0f;
     }
 
