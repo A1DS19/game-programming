@@ -6,6 +6,7 @@
 #include "Actor.hpp"
 #include "Asteroid.hpp"
 #include "GL/glew.h"
+#include "Math.hpp"
 #include "SDL_image.h"
 #include "SDL_log.h"
 #include "SDL_render.h"
@@ -113,11 +114,15 @@ void Game::CreateSpriteVerts() {
 
 bool Game::LoadShaders() {
   mSpriteShader = new Shader();
-  if (!mSpriteShader->Load("../shaders/Basic.vert", "../shaders/Basic.frag")) {
+  if (!mSpriteShader->Load("../shaders/Transform.vert",
+                           "../shaders/Basic.frag")) {
     return false;
   }
 
   mSpriteShader->SetActive();
+  // Set view projection matrix.
+  Matrix4 viewProj = Matrix4::CreateSimpleViewProj(1024.0f, 768.0f);
+  mSpriteShader->SetMatrixUniform("uViewProj", viewProj);
   return true;
 }
 
@@ -187,6 +192,7 @@ void Game::UpdateGame() {
 
   // Move pending actors to mActors
   for (auto pending : mPendingActors) {
+    pending->ComputeWorldTransform();
     mActors.emplace_back(pending);
   }
   mPendingActors.clear();

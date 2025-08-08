@@ -5,9 +5,15 @@
 #include <sstream>
 #include <string>
 
-Shader::Shader() : mShaderProgram(0), mVertexShader(0), mFragShader(0) {}
+Shader::Shader() : mVertexShader(0), mFragShader(0), mShaderProgram(0) {}
 
 Shader::~Shader() {}
+
+void Shader::SetMatrixUniform(const char *name, const Matrix4 &matrix) {
+  GLuint loc = glGetUniformLocation(mShaderProgram, name);
+  // Send the matrix data to the uniform
+  glUniformMatrix4fv(loc, 1, GL_TRUE, matrix.GetAsFloatPtr());
+}
 
 void Shader::Unload() {
   // Delete the programs/shaders.

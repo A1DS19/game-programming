@@ -1,10 +1,13 @@
+
 #include "Actor.hpp"
 
 #include <algorithm>
 #include <cstdint>
+#include <vector>
 
 #include "Component.hpp"
 #include "Game.hpp"
+#include "Math.hpp"
 
 Actor::Actor(Game *game)
     : mState(EActive), mPosition(Vector2::Zero), mScale(1.0f), mRotation(0.0f),
@@ -24,8 +27,10 @@ Actor::~Actor() {
 
 void Actor::Update(float deltaTime) {
   if (mState == EActive) {
+    ComputeWorldTransform();
     UpdateComponents(deltaTime);
     UpdateActor(deltaTime);
+    ComputeWorldTransform();
   }
 }
 
@@ -65,7 +70,7 @@ void Actor::AddComponent(Component *component) {
 }
 
 void Actor::RemoveComponent(Component *component) {
-  auto iter = std::find(mComponents.begin(), mComponents.end(), component);
+  auto iter = std::ranges::find(mComponents, component);
   if (iter != mComponents.end()) {
     mComponents.erase(iter);
   }
@@ -80,11 +85,11 @@ void Actor::ComputeWorldTransform() {
     mWorldTransform *= Matrix4::CreateRotationZ(mRotation);
     // Translate.
     mWorldTransform *=
-        Matrix4::CreateTranslation(Vector3(mPosition.x, mPosition.y, 0.0f));
+        Matrix4::CreateTranslation(Vector3(mPosition.x, mPosition.y, 0.0F));
 
     // Inform components world updated.
-    for (auto comp : mComponents) {
-      // comp->OnUpdateWorldTransform();
+    for (auto *comp : mComponents) {
+      comp->OnUpdateWorldTransform();
     }
   }
 }
