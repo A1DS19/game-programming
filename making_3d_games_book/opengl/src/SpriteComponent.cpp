@@ -2,6 +2,7 @@
 
 #include "Actor.hpp"
 #include "Component.hpp"
+#include "GL/glew.h"
 #include "Game.hpp"
 #include "Math.hpp"
 #include "SDL_rect.h"
@@ -30,10 +31,9 @@ void SpriteComponent::Draw(Shader *shader) {
 
   // Set world transform
   shader->SetMatrixUniform("uWorldTransform", world);
+
   // Set current texture
   // mTexture->SetActive();
-  // Draw quad
-
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
