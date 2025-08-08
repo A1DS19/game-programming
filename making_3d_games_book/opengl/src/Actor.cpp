@@ -23,8 +23,12 @@ Actor::~Actor() {
 
 void Actor::Update(float deltaTime) {
   if (mState == EActive) {
+    ComputeWorldTransform();
+
     UpdateComponents(deltaTime);
     UpdateActor(deltaTime);
+
+    ComputeWorldTransform();
   }
 }
 
@@ -83,7 +87,7 @@ void Actor::ComputeWorldTransform() {
 
     // Inform components world updated.
     for (auto comp : mComponents) {
-      // comp->OnUpdateWorldTransform();
+      comp->OnUpdateWorldTransform();
     }
   }
 }

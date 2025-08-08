@@ -16,6 +16,13 @@ void Shader::Unload() {
   glDeleteShader(mFragShader);
 }
 
+void Shader::SetMatrixUniform(const char *name, const Matrix4 &matrix) {
+  // Find the uniform by this name
+  GLuint loc = glGetUniformLocation(mShaderProgram, name);
+  // Send the matrix data to the uniform
+  glUniformMatrix4fv(loc, 1, GL_TRUE, matrix.GetAsFloatPtr());
+}
+
 void Shader::SetActive() { glUseProgram(mShaderProgram); }
 
 bool Shader::IsValidProgram() {

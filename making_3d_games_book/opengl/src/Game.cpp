@@ -45,7 +45,8 @@ bool Game::Initialize() {
   SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
   mWindow =
-      SDL_CreateWindow("asteroids", 100, 100, 1024, 768, SDL_WINDOW_OPENGL);
+      SDL_CreateWindow("asteroids", 100, 100, static_cast<int>(SCREEN_WIDTH),
+                       static_cast<int>(SCREEN_HEIGHT), SDL_WINDOW_OPENGL);
   mContext = SDL_GL_CreateContext(mWindow);
   glewExperimental = true;
   if (glewInit() != GLEW_OK) {
@@ -97,16 +98,21 @@ void Game::CreateSpriteVerts() {
       2, 3, 0  // 2nd polygon
   };
 
+
   mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
 }
 
 bool Game::LoadShaders() {
   mSpriteShader = new Shader();
-  if (!mSpriteShader->Load("../shaders/Basic.vert", "../shaders/Basic.frag")) {
+  if (!mSpriteShader->Load("../shaders/Transform.vert",
+                           "../shaders/Basic.frag")) {
     return false;
   }
 
   mSpriteShader->SetActive();
+  // Set the view-projection matrix
+  Matrix4 viewProj = Matrix4::CreateSimpleViewProj(SCREEN_WIDTH, SCREEN_HEIGHT);
+  mSpriteShader->SetMatrixUniform("uViewProj", viewProj);
   return true;
 }
 
@@ -176,6 +182,7 @@ void Game::UpdateGame() {
 
   // Move pending actors to mActors
   for (auto pending : mPendingActors) {
+    pending->ComputeWorldTransform();
     mActors.emplace_back(pending);
   }
   mPendingActors.clear();
@@ -200,6 +207,7 @@ void Game::GenerateOutput() {
 
   mSpriteShader->SetActive();
   mSpriteVerts->SetActive();
+
 
   // Draw all sprite components
   for (auto sprite : mSprites) {
@@ -266,7 +274,7 @@ void Game::RemoveAsteroid(Asteroid *asteroid) {
 
 void Game::LoadData() {
   mShip = new Ship(this);
-  mShip->SetPosition(Vector2(512.0f, 384.0f));
+  mShip->SetPosition(Vector2(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f));
   mShip->SetRotation(Math::PiOver2);
 
   const int numAsteroids = 20;
@@ -304,7 +312,7 @@ SDL_Texture *Game::GetTexture(const std::string &filename) {
     tex = SDL_CreateTextureFromSurface(mRenderer, surf);
     SDL_FreeSurface(surf);
     if (!tex) {
-      SDL_Log("Failed to convert surface to texture: %s", filename.c_str());
+      // SDL_Log("Failed to convert surface to texture: %s", filename.c_str());
       return nullptr;
     }
 
