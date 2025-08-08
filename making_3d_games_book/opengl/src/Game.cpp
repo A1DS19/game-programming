@@ -290,7 +290,7 @@ void Game::RemoveAsteroid(Asteroid *asteroid) {
 
 void Game::LoadData() {
   mShip = new Ship(this);
-  mShip->SetPosition(Vector2(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f));
+  // mShip->SetPosition(Vector2(SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f));
   mShip->SetRotation(Math::PiOver2);
 
   const int numAsteroids = 20;

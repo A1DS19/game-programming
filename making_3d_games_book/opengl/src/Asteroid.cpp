@@ -9,7 +9,9 @@
 #include "SpriteComponent.hpp"
 
 Asteroid::Asteroid(Game *game) : Actor(game) {
-  Vector2 randPos = Random::GetVector(Vector2::Zero, Vector2(Game::SCREEN_WIDTH, Game::SCREEN_HEIGHT));
+  Vector2 randPos =
+      Random::GetVector(Vector2(-512.0f, -384.0f), Vector2(512.0f, 384.0f));
+
   SetPosition(randPos);
   SetRotation(Random::GetFloatRange(0.0f, Math::TwoPi));
 
