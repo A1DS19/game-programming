@@ -1,16 +1,15 @@
 #include "Game.hpp"
-
-#include <algorithm>
-#include <iostream>
-#include <vector>
-
 #include "Actor.hpp"
+#include "CameraActor.hpp"
 #include "GL/glew.h"
 #include "MeshComponent.hpp"
+#include "PlaneActor.hpp"
 #include "Renderer.hpp"
 #include "SDL_log.h"
 #include "SDL_timer.h"
 #include "SpriteComponent.hpp"
+#include <algorithm>
+#include <vector>
 
 Game::Game() : mRenderer{nullptr}, mIsRunning{true}, mUpdatingActors{false} {}
 
@@ -175,6 +174,12 @@ void Game::LoadData() {
   a->SetScale(3.0f);
   mc = new MeshComponent(a);
   mc->SetMesh(mRenderer->GetMesh("../assets/Sphere.gpmesh"));
+
+  mRenderer->SetAmbientLight(Vector3(0.2f, 0.2f, 0.2f));
+  DirectionalLight &dir = mRenderer->GetDirectionalLight();
+  dir.mDirection = Vector3(0.0f, -0.707f, -0.707f);
+  dir.mDiffuseColor = Vector3(0.78f, 0.88f, 1.0f);
+  dir.mSpecColor = Vector3(0.8f, 0.8f, 0.8f);
 }
 
 void Game::UnloadData() {

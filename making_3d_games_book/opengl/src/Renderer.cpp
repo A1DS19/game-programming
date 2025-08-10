@@ -38,9 +38,8 @@ bool Renderer::Initialize(float screenWidth, float screenHeight) {
   // Force OpenGL to use hardware acceleration
   SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
-  mWindow =
-      SDL_CreateWindow("asteroids", 100, 100, static_cast<int>(screenWidth),
-                       static_cast<int>(screenHeight), SDL_WINDOW_OPENGL);
+  mWindow = SDL_CreateWindow("3D", 100, 100, static_cast<int>(screenWidth),
+                             static_cast<int>(screenHeight), SDL_WINDOW_OPENGL);
 
   mContext = SDL_GL_CreateContext(mWindow);
   glewExperimental = true;
@@ -100,11 +99,10 @@ void Renderer::Draw() {
   mMeshShader->SetActive();
   // Update view-projection matrix
   mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
-
-  // // Update lighting uniforms
-  // SetLightUniforms(mMeshShader);
-  for (auto *meshComp : mMeshComps) {
-    meshComp->Draw(mMeshShader);
+  // Update lighting uniforms
+  SetLightUniforms(mMeshShader);
+  for (auto mc : mMeshComps) {
+    mc->Draw(mMeshShader);
   }
 
   // Draw all sprite components
@@ -118,7 +116,7 @@ void Renderer::Draw() {
   // Set shader/vao as active
   mSpriteShader->SetActive();
   mSpriteVerts->SetActive();
-  for (auto *sprite : mSprites) {
+  for (auto sprite : mSprites) {
     sprite->Draw(mSpriteShader);
   }
 
@@ -204,8 +202,7 @@ bool Renderer::LoadShaders() {
 
   // Create basic mesh shader
   mMeshShader = new Shader();
-  if (!mMeshShader->Load("../shaders/BasicMesh.vert",
-                         "../shaders/BasicMesh.frag")) {
+  if (!mMeshShader->Load("../shaders/Phong.vert", "../shaders/Phong.frag")) {
     return false;
   }
 
@@ -214,7 +211,6 @@ bool Renderer::LoadShaders() {
   mView = Matrix4::CreateLookAt(Vector3::Zero, Vector3::UnitX, Vector3::UnitZ);
   mProjection = Matrix4::CreatePerspectiveFOV(
       Math::ToRadians(70.0f), mScreenWidth, mScreenHeight, 25.0f, 10000.0f);
-
   mMeshShader->SetMatrixUniform("uViewProj", mView * mProjection);
   return true;
 }
@@ -232,16 +228,17 @@ void Renderer::CreateSpriteVerts() {
   mSpriteVerts = new VertexArray(vertices, 4, indices, 6);
 }
 
-// void Renderer::SetLightUniforms(Shader *shader) {
-//   // Camera position is from inverted view
-//   Matrix4 invView = mView;
-//   invView.Invert();
-//   shader->SetVectorUniform("uCameraPos", invView.GetTranslation());
-//   // Ambient light
-//   shader->SetVectorUniform("uAmbientLight", mAmbientLight);
-//   // Directional light
-//   shader->SetVectorUniform("uDirLight.mDirection", mDirLight.mDirection);
-//   shader->SetVectorUniform("uDirLight.mDiffuseColor",
-//   mDirLight.mDiffuseColor); shader->SetVectorUniform("uDirLight.mSpecColor",
-//   mDirLight.mSpecColor);
-// }
+void Renderer::SetLightUniforms(Shader *shader) {
+  // Camera position is from inverted view
+  Matrix4 invView = mView;
+  invView.Invert();
+  shader->SetVectorUniform("uCameraPos", invView.GetTranslation());
+  // Ambient light
+  shader->SetVectorUniform("uAmbientLight", mAmbientLight);
+  // Directional light
+  shader->SetVectorUniform("uDirLight.mDirection", mDirLight.mDirection);
+  shader->SetVectorUniform("uDirLight.mDiffuseColor", mDirLight.mDiffuseColor);
+  shader->SetVectorUniform("uDirLight.mSpecColor", mDirLight.mSpecColor);
+  // Set specular power
+  shader->SetFloatUniform("uSpecPower", 100.0f);
+}
