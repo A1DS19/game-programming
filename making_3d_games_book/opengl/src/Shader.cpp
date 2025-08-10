@@ -23,6 +23,18 @@ void Shader::SetMatrixUniform(const char *name, const Matrix4 &matrix) {
   glUniformMatrix4fv(loc, 1, GL_TRUE, matrix.GetAsFloatPtr());
 }
 
+void Shader::SetVectorUniform(const char *name, const Vector3 &vector) {
+  GLuint loc = glGetUniformLocation(mShaderProgram, name);
+  // Send the vector data
+  glUniform3fv(loc, 1, vector.GetAsFloatPtr());
+}
+
+void Shader::SetFloatUniform(const char *name, float value) {
+  GLuint loc = glGetUniformLocation(mShaderProgram, name);
+  // Send the float data
+  glUniform1f(loc, value);
+}
+
 void Shader::SetActive() { glUseProgram(mShaderProgram); }
 
 bool Shader::IsValidProgram() {
