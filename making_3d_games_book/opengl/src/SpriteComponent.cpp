@@ -13,29 +13,33 @@
 SpriteComponent::SpriteComponent(Actor *owner, int drawOrder)
     : Component(owner), mTexture(nullptr), mDrawOrder(drawOrder), mTexWidth(0),
       mTextHeight(0) {
-  mOwner->GetGame()->AddSprite(this);
+  mOwner->GetGame()->GetRenderer()->AddSprite(this);
 }
 
-SpriteComponent::~SpriteComponent() { mOwner->GetGame()->RemoveSprite(this); }
+SpriteComponent::~SpriteComponent() {
+  mOwner->GetGame()->GetRenderer()->RemoveSprite(this);
+}
 
 void SpriteComponent::Draw(Shader *shader) {
-  // Scale the quad by the width/height of texture
-  // If texture failed to load, use default size so sprites are still visible
-  float width = mTexWidth > 0 ? static_cast<float>(mTexWidth) : 64.0f;
-  float height = mTextHeight > 0 ? static_cast<float>(mTextHeight) : 64.0f;
-  Matrix4 scaleMat = Matrix4::CreateScale(width, height, 1.0f);
+  if (mTexture) {
+    // Scale the quad by the width/height of texture
+    // If texture failed to load, use default size so sprites are still visible
+    float width = mTexWidth > 0 ? static_cast<float>(mTexWidth) : 64.0f;
+    float height = mTextHeight > 0 ? static_cast<float>(mTextHeight) : 64.0f;
+    Matrix4 scaleMat = Matrix4::CreateScale(width, height, 1.0f);
 
-  Matrix4 world = scaleMat * mOwner->GetWorldTransform();
+    Matrix4 world = scaleMat * mOwner->GetWorldTransform();
 
-  // Since all sprites use the same shader/vertices,
-  // the game first sets them active before any sprite draws
+    // Since all sprites use the same shader/vertices,
+    // the game first sets them active before any sprite draws
 
-  // Set world transform
-  shader->SetMatrixUniform("uWorldTransform", world);
+    // Set world transform
+    shader->SetMatrixUniform("uWorldTransform", world);
 
-  // Set current texture
-  mTexture->SetActive();
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    // Set current texture
+    mTexture->SetActive();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+  }
 }
 
 void SpriteComponent::SetTexture(Texture *texture) {

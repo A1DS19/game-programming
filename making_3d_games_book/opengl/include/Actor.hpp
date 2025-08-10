@@ -28,14 +28,14 @@ public:
   virtual void ActorInput(const uint8_t *keyState);
 
   // Getters/setters.
-  const Vector2 &GetPosition() const { return mPosition; }
-  void SetPosition(const Vector2 &pos) { mPosition = pos; }
+  const Vector3 &GetPosition() const { return mPosition; }
+  void SetPosition(const Vector3 &pos) { mPosition = pos; }
   float GetScale() const { return mScale; }
   void SetScale(float scale) { mScale = scale; }
-  float GetRotation() const { return mRotation; }
-  void SetRotation(float rotation) { mRotation = rotation; }
-  Vector2 GetForward() const {
-    return Vector2(Math::Cos(mRotation), -Math::Sin(mRotation));
+  const Quaternion &GetRotation() const { return mRotation; }
+  void SetRotation(Quaternion rotation) { mRotation = rotation; }
+  Vector3 GetForward() const {
+    return Vector3::Transform(Vector3::UnitX, mRotation);
   }
   void ComputeWorldTransform();
   State GetState() const { return mState; }
@@ -52,9 +52,9 @@ private:
   State mState;
 
   // Transform
-  Vector2 mPosition;
+  Vector3 mPosition;
   float mScale;
-  float mRotation;
+  Quaternion mRotation;
   Matrix4 mWorldTransform;
   bool mRecomputeWorldTransform;
 

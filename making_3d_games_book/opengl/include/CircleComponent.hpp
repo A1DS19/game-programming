@@ -3,19 +3,19 @@
 #include "Component.hpp"
 
 class Actor;
-class Vector2;
+class Vector3;
 
-class CircleComponent: public Component{
-  public:
-    CircleComponent(Actor *owner);
+class CircleComponent : public Component {
+public:
+  CircleComponent(Actor *owner);
 
-    void SetRadius(float radius){mRadius = radius;}
-    float GetRadius() const;
+  void SetRadius(float radius) { mRadius = radius; }
+  float GetRadius() const;
 
-    const Vector2& GetCenter() const;
+  const Vector3 &GetCenter() const;
 
-  private:
-    float mRadius;
+private:
+  float mRadius;
 };
 
 bool Intersect(const CircleComponent &a, const CircleComponent &b);

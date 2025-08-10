@@ -2,19 +2,14 @@
 
 #include <SDL2/SDL.h>
 
-#include <string>
-#include <unordered_map>
+#include "Renderer.hpp"
 #include <vector>
 
 #include "SDL_stdinc.h"
 
 class Actor;
-class SpriteComponent;
-class Asteroid;
-class Ship;
-class VertexArray;
-class Shader;
-class Texture;
+class Renderer;
+class CameraActor;
 class Game {
 public:
   static constexpr float SCREEN_WIDTH = 1024.0f;
@@ -28,15 +23,7 @@ public:
   void AddActor(Actor *actor);
   void RemoveActor(Actor *actor);
 
-  void AddSprite(SpriteComponent *sprite);
-  void RemoveSprite(SpriteComponent *sprite);
-
-  Texture *GetTexture(const std::string &filename);
-
-  // game specific
-  void AddAsteroid(Asteroid *asteroid);
-  void RemoveAsteroid(Asteroid *asteroid);
-  std::vector<Asteroid *> &GetAsteroids() { return mAsteroids; }
+  class Renderer *GetRenderer() { return mRenderer; }
 
 private:
   void ProcessInput();
@@ -44,24 +31,19 @@ private:
   void GenerateOutput();
   void LoadData();
   void UnloadData();
-  void CreateSpriteVerts();
-  bool LoadShaders();
 
-  std::unordered_map<std::string, Texture *> mTextures;
-  std::vector<Actor *> mActors;
-  std::vector<Actor *> mPendingActors;
-  bool mUpdatingActors;
-  std::vector<SpriteComponent *> mSprites;
-  VertexArray *mSpriteVerts;
-  Shader *mSpriteShader;
+  // All the actors in the game
+  std::vector<class Actor *> mActors;
+  // Any pending actors
+  std::vector<class Actor *> mPendingActors;
 
-  SDL_Window *mWindow;
-  SDL_GLContext mContext;
-  SDL_Renderer *mRenderer;
+  class Renderer *mRenderer;
+
   Uint32 mTicksCount;
   bool mIsRunning;
+  // Track if we're updating actors right now
+  bool mUpdatingActors;
 
-  // game specific
-  Ship *mShip;
-  std::vector<Asteroid *> mAsteroids;
+  // Game-specific code
+  CameraActor *mCameraActor;
 };

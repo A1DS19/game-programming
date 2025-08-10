@@ -10,8 +10,9 @@
 #include "Math.hpp"
 
 Actor::Actor(Game *game)
-    : mState(EActive), mPosition(Vector2::Zero), mScale(1.0f), mRotation(0.0f),
-      mGame(game), mRecomputeWorldTransform(true) {
+    : mState(EActive), mPosition(Vector3::Zero), mScale(1.0f),
+      mRotation(Quaternion::Identity), mGame(game),
+      mRecomputeWorldTransform(true) {
   mGame->AddActor(this);
 }
 
@@ -84,7 +85,7 @@ void Actor::ComputeWorldTransform() {
     // Scale.
     mWorldTransform = Matrix4::CreateScale(mScale);
     // Rotate.
-    mWorldTransform *= Matrix4::CreateRotationZ(mRotation);
+    mWorldTransform *= Matrix4::CreateFromQuaternion(mRotation);
     // Translate.
     mWorldTransform *=
         Matrix4::CreateTranslation(Vector3(mPosition.x, mPosition.y, 0.0F));
