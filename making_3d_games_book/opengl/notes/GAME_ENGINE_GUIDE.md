@@ -17,6 +17,8 @@ This guide documents the complete process of creating a 3D game engine from the 
 12. [UI and Sprite System](#12-ui-and-sprite-system)
 13. [Asset Loading and File Formats](#13-asset-loading-and-file-formats)
 14. [Advanced Features](#14-advanced-features)
+15. [Collision Detection System](#15-collision-detection-system)
+16. [Advanced Input System](#16-advanced-input-system)
 
 ---
 
@@ -935,30 +937,127 @@ The `VertexArray` class encapsulates the OpenGL objects needed to render a mesh:
 `include/VertexArray.hpp`:
 ```cpp
 #pragma once
-#include <GL/glew.h>
+
+/*
+ Vertex Array: The concept of defining polygon vertices in an ordered list.
+
+  Vertex Buffer (VBO): GPU memory that stores the actual vertex data (positions,
+  colors, normals, texture coordinates).
+
+  Index Buffer (EBO/IBO): GPU memory that stores indices pointing to vertices in
+ the vertex buffer.
+
+  How They Work Together:
+
+  Without Index Buffer:
+  // Vertex buffer for a quad (2 triangles)
+  float vertices[] = {
+      // Triangle 1
+      -0.5f, -0.5f,  // vertex 0
+       0.5f, -0.5f,  // vertex 1
+       0.5f,  0.5f,  // vertex 2
+      // Triangle 2
+      -0.5f, -0.5f,  // vertex 0 (duplicate!)
+       0.5f,  0.5f,  // vertex 2 (duplicate!)
+      -0.5f,  0.5f   // vertex 3
+  };
+
+  With Index Buffer:
+  // Vertex buffer (no duplicates)
+  float vertices[] = {
+      -0.5f, -0.5f,  // vertex 0
+       0.5f, -0.5f,  // vertex 1
+       0.5f,  0.5f,  // vertex 2
+      -0.5f,  0.5f   // vertex 3
+  };
+
+  // Index buffer (references vertices)
+  unsigned int indices[] = {
+      0, 1, 2,  // Triangle 1
+      0, 2, 3   // Triangle 2
+  };
+
+  Benefits:
+  - Eliminates duplicate vertices
+  - Saves memory
+  - More efficient rendering
+ */
 
 class VertexArray {
 public:
-    // Takes in vertex and index data to buffer to the GPU
     VertexArray(const float* verts, unsigned int numVerts,
                const unsigned int* indices, unsigned int numIndices);
     ~VertexArray();
 
-    // Activates this vertex array for drawing
-    void SetActive();
+    void SetActive(); // Activate vertex array to draw
 
-    unsigned int GetNumIndices() const { return mNumIndices; }
-    unsigned int GetNumVerts() const { return mNumVerts; }
+    unsigned int GetNumIndices() const noexcept { return mNumIndices; }
+    unsigned int GetNumVerts() const noexcept { return mNumVerts; }
 
 private:
-    unsigned int mNumVerts;
-    unsigned int mNumIndices;
-    
-    // OpenGL object IDs
-    unsigned int mVertexBuffer; // VBO
-    unsigned int mIndexBuffer;  // IBO
-    unsigned int mVertexArray;  // VAO
+    unsigned int mNumVerts;    // How many vertices in the vertex buffer?
+    unsigned int mNumIndices;  // How many indices in the index buffer
+    unsigned int mVertexBuffer; // OpenGL ID of the vertex buffer
+    unsigned int mIndexBuffer;  // OpenGL ID of the index buffer
+    unsigned int mVertexArray;  // OpenGL ID of the vertex array object
 };
+```
+
+`src/VertexArray.cpp` handles the complex OpenGL setup:
+```cpp
+#include "VertexArray.hpp"
+#include <GL/glew.h>
+
+VertexArray::VertexArray(const float* verts, unsigned int numVerts,
+                        const unsigned int* indices, unsigned int numIndices)
+    : mNumVerts(numVerts), mNumIndices(numIndices) {
+    
+    // Create vertex array object (VAO) - stores all vertex attribute state
+    glGenVertexArrays(1, &mVertexArray);
+    glBindVertexArray(mVertexArray);
+
+    // Create vertex buffer object (VBO) - stores vertex data on GPU
+    glGenBuffers(1, &mVertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, mVertexBuffer);
+    // Upload vertex data to GPU (8 floats per vertex: position(3) + normal(3) + texcoords(2))
+    glBufferData(GL_ARRAY_BUFFER, numVerts * 8 * sizeof(float), verts, GL_STATIC_DRAW);
+
+    // Create index buffer object (EBO) - stores triangle indices for indexed drawing
+    glGenBuffers(1, &mIndexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBuffer);
+    // Upload index data to GPU
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(unsigned int),
+                 indices, GL_STATIC_DRAW);
+
+    // Configure vertex attribute pointers to tell OpenGL how to interpret vertex data
+    // Vertex format: [x, y, z, nx, ny, nz, u, v] (8 floats total per vertex)
+    
+    // Position attribute (location 0): 3 floats starting at offset 0
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
+
+    // Normal attribute (location 1): 3 floats starting at offset 12 bytes (3 floats)
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                          reinterpret_cast<void*>(sizeof(float) * 3));
+
+    // Texture coordinates attribute (location 2): 2 floats starting at offset 24 bytes (6 floats)
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+                          reinterpret_cast<void*>(sizeof(float) * 6));
+}
+
+VertexArray::~VertexArray() {
+    // Clean up OpenGL resources
+    glDeleteBuffers(1, &mVertexBuffer);
+    glDeleteBuffers(1, &mIndexBuffer);
+    glDeleteVertexArrays(1, &mVertexArray);
+}
+
+void VertexArray::SetActive() { 
+    // Bind this VAO to make it the active vertex array for rendering
+    glBindVertexArray(mVertexArray); 
+}
 ```
 
 ### Step 7.2: Create Mesh Class
@@ -1757,19 +1856,85 @@ Assets you'll commonly work with:
 - `Plane.gpmesh` - Ground/wall tiles (used extensively)
 - Associated `.png` texture files
 
-### Step 13.2: Texture Loading with STB Image
+### Step 13.2: Texture Class Implementation
 
-The engine loads textures using the STB image library (included via FetchContent):
+The `Texture` class handles loading images from disk and uploading them to GPU memory using STB Image.
+
+`include/Texture.hpp`:
 ```cpp
-// In Renderer class, texture loading is handled automatically
-class Texture* GetTexture(const std::string& fileName);
+#pragma once
+#include <string>
 
-// Usage in game code
-auto healthBarTexture = mRenderer->GetTexture("../assets/HealthBar.png");
-auto radarTexture = mRenderer->GetTexture("../assets/Radar.png");
+class Texture {
+public:
+    Texture();
+    ~Texture();
+
+    bool Load(const std::string& fileName);
+    void Unload();
+    void SetActive();
+
+    int GetWidth() const { return mWidth; }
+    int GetHeight() const { return mHeight; }
+
+private:
+    unsigned int mTextureId; // OpenGL texture ID
+    int mWidth;
+    int mHeight;
+};
 ```
 
-The renderer maintains a texture cache to avoid reloading the same texture multiple times:
+`src/Texture.cpp` implements the complete texture loading pipeline:
+```cpp
+#include "Texture.hpp"
+#include "SDL_log.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#include <GL/glew.h>
+
+Texture::Texture() : mTextureId(0), mWidth(0), mHeight(0) {}
+
+Texture::~Texture() {}
+
+bool Texture::Load(const std::string& fileName) {
+    int channels = 0;
+    // Load image data using STB Image, force 4 channels (RGBA)
+    unsigned char* data = stbi_load(fileName.c_str(), &mWidth, &mHeight, &channels, 4);
+
+    if (data) {
+        // Generate OpenGL texture object
+        glGenTextures(1, &mTextureId);
+        glBindTexture(GL_TEXTURE_2D, mTextureId);
+
+        // Upload pixel data to GPU (forced RGBA format)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mWidth, mHeight, 0, GL_RGBA,
+                     GL_UNSIGNED_BYTE, data);
+
+        // Free CPU memory
+        stbi_image_free(data);
+
+        // Set filtering parameters for smooth scaling
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        SDL_Log("Successfully loaded texture %s (%dx%d)", fileName.c_str(), mWidth, mHeight);
+        return true;
+    } else {
+        SDL_Log("Failed to load image %s: %s", fileName.c_str(), stbi_failure_reason());
+        return false;
+    }
+}
+
+void Texture::Unload() { 
+    glDeleteTextures(1, &mTextureId); 
+}
+
+void Texture::SetActive() { 
+    glBindTexture(GL_TEXTURE_2D, mTextureId); 
+}
+```
+
+The renderer maintains a texture cache to avoid reloading:
 ```cpp
 std::unordered_map<std::string, class Texture*> mTextures;
 std::unordered_map<std::string, class Mesh*> mMeshes;
@@ -1786,8 +1951,148 @@ For more complex scenes, the engine supports:
 ### Step 12.3: Audio System
 Integrate an audio library like `SDL_mixer` or `FMOD`. Create an `AudioSystem` class to manage loading and playing sounds. You can then create an `AudioComponent` to attach sounds to actors, allowing for 3D positional audio.
 
-### Step 12.4: Collision Detection
-Implement a physics system. Start with simple bounding shapes like spheres or Axis-Aligned Bounding Boxes (AABBs). Add a `BoxComponent` or `SphereComponent` to actors and check for intersections every frame to detect collisions.
+## 15. Collision Detection System
+
+The engine includes a simple collision detection system using circular collision boundaries.
+
+### Step 15.1: CircleComponent for Collision
+
+`include/CircleComponent.hpp`:
+```cpp
+#pragma once
+#include "Component.hpp"
+
+class CircleComponent : public Component {
+public:
+    CircleComponent(Actor* owner);
+
+    void SetRadius(float radius) { mRadius = radius; }
+    float GetRadius() const;
+    const Vector3& GetCenter() const;
+
+private:
+    float mRadius;
+};
+
+// Global collision detection function
+bool Intersect(const CircleComponent& a, const CircleComponent& b);
+```
+
+`src/CircleComponent.cpp`:
+```cpp
+#include "CircleComponent.hpp"
+#include "Actor.hpp"
+#include "Math.hpp"
+
+CircleComponent::CircleComponent(Actor* owner)
+    : Component(owner), mRadius(0.0f) {}
+
+const Vector3& CircleComponent::GetCenter() const {
+    return mOwner->GetPosition();
+}
+
+float CircleComponent::GetRadius() const {
+    // Scale radius by actor's scale factor
+    return mOwner->GetScale() * mRadius;
+}
+
+bool Intersect(const CircleComponent& a, const CircleComponent& b) {
+    // Calculate distance squared between centers
+    Vector3 diff = a.GetCenter() - b.GetCenter();
+    float distSq = diff.LengthSq();
+
+    // Calculate sum of radii squared
+    float radiiSq = a.GetRadius() + b.GetRadius();
+    radiiSq *= radiiSq;
+
+    return distSq <= radiiSq;
+}
+```
+
+## 16. Advanced Input System
+
+Beyond the camera's hardcoded input, the engine provides a configurable input component.
+
+### Step 16.1: InputComponent Implementation
+
+`include/InputComponent.hpp`:
+```cpp
+#pragma once
+#include "MoveComponent.hpp"
+#include <cstdint>
+
+class InputComponent : public MoveComponent {
+public:
+    InputComponent(Actor* owner);
+    void ProcessInput(const uint8_t* keyState) override;
+
+    // Getters/setters for customization
+    float GetMaxForward() const { return mMaxForwardSpeed; }
+    float GetMaxAngular() const { return mMaxAngularSpeed; }
+    int GetForwardKey() const { return mForwardKey; }
+    int GetBackKey() const { return mBackKey; }
+    int GetClockwiseKey() const { return mClockwiseKey; }
+    int GetCounterClockwiseKey() const { return mCounterClockwiseKey; }
+
+    void SetMaxForwardSpeed(float speed) { mMaxForwardSpeed = speed; }
+    void SetMaxAngularSpeed(float speed) { mMaxAngularSpeed = speed; }
+    void SetForwardKey(int key) { mForwardKey = key; }
+    void SetBackKey(int key) { mBackKey = key; }
+    void SetClockwiseKey(int key) { mClockwiseKey = key; }
+    void SetCounterClockwiseKey(int key) { mCounterClockwiseKey = key; }
+
+private:
+    float mMaxForwardSpeed;
+    float mMaxAngularSpeed;
+    int mForwardKey;
+    int mBackKey;
+    int mClockwiseKey;
+    int mCounterClockwiseKey;
+};
+```
+
+`src/InputComponent.cpp`:
+```cpp
+#include "InputComponent.hpp"
+#include "Actor.hpp"
+
+InputComponent::InputComponent(Actor* owner)
+    : MoveComponent(owner), mForwardKey(0), mBackKey(0), 
+      mClockwiseKey(0), mCounterClockwiseKey(0) {}
+
+void InputComponent::ProcessInput(const uint8_t* keyState) {
+    float forwardSpeed = 0.0f;
+    if (keyState[mForwardKey]) {
+        forwardSpeed += mMaxForwardSpeed;
+    }
+    if (keyState[mBackKey]) {
+        forwardSpeed -= mMaxForwardSpeed;
+    }
+    SetForwardSpeed(forwardSpeed);
+
+    float angularSpeed = 0.0f;
+    if (keyState[mClockwiseKey]) {
+        angularSpeed += mMaxAngularSpeed;
+    }
+    if (keyState[mCounterClockwiseKey]) {
+        angularSpeed -= mMaxAngularSpeed;
+    }
+    SetAngularSpeed(angularSpeed);
+}
+```
+
+This allows creating actors with customizable controls:
+```cpp
+// Create a player-controlled actor
+Actor* player = new Actor(this);
+InputComponent* input = new InputComponent(player);
+input->SetForwardKey(SDL_SCANCODE_W);
+input->SetBackKey(SDL_SCANCODE_S);
+input->SetClockwiseKey(SDL_SCANCODE_D);
+input->SetCounterClockwiseKey(SDL_SCANCODE_A);
+input->SetMaxForwardSpeed(300.0f);
+input->SetMaxAngularSpeed(Math::TwoPi);
+```
 
 ---
 
