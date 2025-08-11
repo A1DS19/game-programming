@@ -14,7 +14,9 @@ This guide documents the complete process of creating a 3D game engine from the 
 9. [Camera and Movement](#9-camera-and-movement)
 10. [Input Handling](#10-input-handling)
 11. [Game Loop Integration](#11-game-loop-integration)
-12. [Advanced Features](#12-advanced-features)
+12. [UI and Sprite System](#12-ui-and-sprite-system)
+13. [Asset Loading and File Formats](#13-asset-loading-and-file-formats)
+14. [Advanced Features](#14-advanced-features)
 
 ---
 
@@ -41,33 +43,119 @@ project/
 ```
 
 ### CMakeLists.txt Setup
-This file tells CMake how to build our project.
+This file tells CMake how to build our project using modern practices with FetchContent for dependency management.
 
 ```cmake
-# Require a minimum version of CMake
-cmake_minimum_required(VERSION 3.10)
-# Define the project name
-project(GameEngine)
+# Require a modern version of CMake for FetchContent support
+cmake_minimum_required(VERSION 3.29.3)
 
-# Find required libraries (packages)
-# CMake will search for these libraries on your system.
-find_package(SDL2 REQUIRED)
-find_package(GLEW REQUIRED)
-find_package(OpenGL REQUIRED)
+# Get project name from directory and define metadata
+get_filename_component(PROJECT_NAME ${CMAKE_SOURCE_DIR} NAME)
+project(${PROJECT_NAME} 
+    VERSION 1.0.0
+    DESCRIPTION "Modern C++ Game with SDL2, OpenGL"
+    LANGUAGES CXX
+)
 
-# Use file(GLOB_RECURSE...) to automatically find all source and header files.
-# This saves us from having to list every new file manually.
-file(GLOB_RECURSE SOURCES "src/*.cpp")
-file(GLOB_RECURSE HEADERS "include/*.hpp")
+# Enable compile_commands.json for LSP support
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Use modern C++23 standard for latest features
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Build type configuration
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug)
+endif()
+
+# Gather all source files using CONFIGURE_DEPENDS for automatic updates
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cxx
+)
+
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+)
 
 # Create the executable target
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(main ${SOURCES} ${HEADERS})
 
-# Tell the compiler where to find our header files
-target_include_directories(${PROJECT_NAME} PRIVATE include)
+# Include directories
+target_include_directories(main
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
-# Link the executable against the libraries we need
-target_link_libraries(${PROJECT_NAME} SDL2::SDL2 GLEW::GLEW OpenGL::GL)
+# Use FetchContent to automatically download and build dependencies
+include(FetchContent)
+
+# SDL2 Main Library - fetch from official repository
+FetchContent_Declare(SDL2
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL
+    GIT_TAG        release-2.32.4
+    GIT_SHALLOW    TRUE
+)
+
+# SDL2_image for texture loading
+FetchContent_Declare(SDL2_image
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL_image
+    GIT_TAG        release-2.8.8
+    GIT_SHALLOW    TRUE
+)
+
+# STB for OpenGL texture loading (header-only library)
+FetchContent_Declare(stb
+  GIT_REPOSITORY https://github.com/nothings/stb
+  GIT_TAG        master
+)
+
+# RapidJSON for JSON parsing (used for asset loading)
+FetchContent_Declare(rapidjson
+  GIT_REPOSITORY https://github.com/Tencent/rapidjson
+  GIT_TAG        v1.1.0
+  GIT_SHALLOW    TRUE
+)
+
+# Configure SDL2 options before making available
+set(SDL_SHARED ON CACHE BOOL "Build SDL2 shared library")
+set(SDL_STATIC OFF CACHE BOOL "Build SDL2 static library")
+
+# Disable RapidJSON examples/tests to avoid compilation issues
+set(RAPIDJSON_BUILD_DOC OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(RAPIDJSON_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
+# Make all dependencies available
+FetchContent_MakeAvailable(SDL2 SDL2_image stb rapidjson)
+
+# Create interface library for stb_image
+add_library(stb_image INTERFACE)
+target_include_directories(stb_image INTERFACE ${stb_SOURCE_DIR})
+
+# Add RapidJSON include directories
+target_include_directories(main PRIVATE ${rapidjson_SOURCE_DIR}/include)
+
+# Find system packages that aren't available via FetchContent
+find_package(GLEW REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(Threads REQUIRED)
+
+# Link all libraries to our target
+target_link_libraries(main
+PRIVATE
+        SDL2::SDL2
+        SDL2::SDL2main
+        SDL2_image::SDL2_image
+        GLEW::GLEW
+        OpenGL::GL
+        Threads::Threads
+        stb_image
+)
 ```
 
 ---
@@ -463,11 +551,11 @@ bool Shader::CompileShader(const std::string& fileName, GLenum shaderType, GLuin
 }
 ```
 
-### Step 4.3: Create Basic Shaders
+### Step 4.3: Create Phong Lighting Shaders
 
-These are the actual shader programs written in GLSL (OpenGL Shading Language).
+Our engine uses Phong lighting shaders directly for realistic rendering. These are the actual shader programs written in GLSL (OpenGL Shading Language).
 
-`shaders/BasicMesh.vert`: This vertex shader transforms vertex positions from model space to clip space and passes data like normals and texture coordinates to the fragment shader.
+`shaders/Phong.vert`: This vertex shader transforms vertex positions from model space to clip space and passes data like normals and texture coordinates to the fragment shader.
 
 ```glsl
 #version 330
@@ -502,25 +590,59 @@ void main() {
 }
 ```
 
-`shaders/BasicMesh.frag`: This simple fragment shader just samples a texture to determine the pixel's color.
+`shaders/Phong.frag`: This fragment shader implements the complete Phong lighting model with ambient, diffuse, and specular components.
 
 ```glsl
 #version 330
 
-// Inputs from the vertex shader
+// Inputs from vertex shader
 in vec2 fragTexCoord;
 in vec3 fragNormal;
 in vec3 fragWorldPos;
 
-// Uniforms
-uniform sampler2D uTexture; // The texture to sample from
-
 // Output color for the pixel
 out vec4 outColor;
 
-void main() {
-    // Sample the texture at the given coordinate
-    outColor = texture(uTexture, fragTexCoord);
+// Texture sampling
+uniform sampler2D uTexture;
+
+// Create a struct for directional light
+struct DirectionalLight
+{
+    vec3 mDirection;    // Direction of light
+    vec3 mDiffuseColor; // Diffuse color
+    vec3 mSpecColor;    // Specular color
+};
+
+// Uniforms for lighting
+uniform vec3 uCameraPos;        // Camera position (in world space)
+uniform float uSpecPower;       // Specular power for this surface
+uniform vec3 uAmbientLight;     // Ambient light level
+uniform DirectionalLight uDirLight; // Directional light
+
+void main()
+{
+    // Surface normal
+    vec3 N = normalize(fragNormal);
+    // Vector from surface to light
+    vec3 L = normalize(-uDirLight.mDirection);
+    // Vector from surface to camera
+    vec3 V = normalize(uCameraPos - fragWorldPos);
+    // Reflection of -L about N
+    vec3 R = normalize(reflect(-L, N));
+
+    // Compute Phong reflection model
+    vec3 Phong = uAmbientLight;
+    float NdotL = dot(N, L);
+    if (NdotL > 0)
+    {
+        vec3 Diffuse = uDirLight.mDiffuseColor * NdotL;
+        vec3 Specular = uDirLight.mSpecColor * pow(max(0.0, dot(R, V)), uSpecPower);
+        Phong += Diffuse + Specular;
+    }
+
+    // Final color is texture color modulated by calculated lighting
+    outColor = texture(uTexture, fragTexCoord) * vec4(Phong, 1.0f);
 }
 ```
 
@@ -735,7 +857,44 @@ void Actor::ComputeWorldTransform() {
 // ... other function implementations ...
 ```
 
-### Step 6.3: Create Base Component Class
+### Step 6.3: Create Specialized Actor Classes
+
+Beyond the base `Actor` class, we often need specialized actors for specific purposes. A perfect example is the `PlaneActor`, which is used extensively for creating walls and floors in our 3D environments.
+
+#### PlaneActor Implementation
+
+`include/PlaneActor.hpp` defines a simple specialized actor:
+```cpp
+#pragma once
+#include "Actor.hpp"
+
+class PlaneActor : public Actor {
+public:
+    PlaneActor(class Game* game);
+};
+```
+
+`src/PlaneActor.cpp` shows how specialized actors can set up their own components automatically:
+```cpp
+#include "PlaneActor.hpp"
+#include "Game.hpp"
+#include "MeshComponent.hpp"
+#include "Renderer.hpp"
+
+PlaneActor::PlaneActor(Game* game) : Actor(game) {
+    // Automatically scale the plane to appropriate size
+    SetScale(10.0f);
+    
+    // Automatically attach a mesh component with the plane mesh
+    MeshComponent* mc = new MeshComponent(this);
+    auto* mesh = GetGame()->GetRenderer()->GetMesh("../assets/Plane.gpmesh");
+    mc->SetMesh(mesh);
+}
+```
+
+This pattern allows us to create reusable actor types. When we need a floor tile or wall segment, we simply create a `PlaneActor` and position it appropriately, rather than manually setting up the mesh component each time.
+
+### Step 6.4: Create Base Component Class
 
 `include/Component.hpp` is the base class for all components. It's very simple, defining the basic interface and storing a pointer to its owner actor.
 
@@ -989,25 +1148,31 @@ void main() {
 
 ### Step 8.2: Implement Lighting in Renderer
 
-We need to pass the lighting data from our C++ code to the shader uniforms.
+We need to pass the lighting data from our C++ code to the shader uniforms. Our implementation centrally manages lighting settings in the `Renderer` class.
 
 Add to `src/Renderer.cpp`:
 ```cpp
 void Renderer::SetLightUniforms(Shader* shader) {
-    // The camera position is the translation component of the inverse view matrix
+    // Camera position is calculated from the inverted view matrix
     Matrix4 invView = mView;
     invView.Invert();
     shader->SetVectorUniform("uCameraPos", invView.GetTranslation());
     
-    // Set ambient light
+    // Set ambient light level
     shader->SetVectorUniform("uAmbientLight", mAmbientLight);
     
-    // Set directional light properties
+    // Set directional light properties using struct notation
     shader->SetVectorUniform("uDirLight.mDirection", mDirLight.mDirection);
     shader->SetVectorUniform("uDirLight.mDiffuseColor", mDirLight.mDiffuseColor);
     shader->SetVectorUniform("uDirLight.mSpecColor", mDirLight.mSpecColor);
+    
+    // Set a default specular power value for all objects
+    // In a more advanced system, this could be per-material
+    shader->SetFloatUniform("uSpecPower", 100.0f);
 }
 ```
+
+This lighting implementation uses a centralized approach where all objects share the same specular power value. The renderer calls `SetLightUniforms()` once per frame before rendering all mesh components, ensuring consistent lighting across the entire scene.
 
 ---
 
@@ -1318,14 +1483,18 @@ void Renderer::Draw() {
 
 ### Step 11.3: Load Initial Game Data
 
-In `src/Game.cpp`, we create the initial actors and set up the scene in `LoadData`.
+In `src/Game.cpp`, we create a complete 3D scene with test objects, a detailed environment, and UI elements in `LoadData`.
 
 ```cpp
 void Game::LoadData() {
-    // Create a cube actor
+    // Create test objects
     Actor* a = new Actor(this);
     a->SetPosition(Vector3(200.0f, 75.0f, 0.0f));
     a->SetScale(100.0f);
+    // Apply complex rotation using quaternions
+    Quaternion q(Vector3::UnitY, -Math::PiOver2);
+    q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::Pi + Math::Pi / 4.0f));
+    a->SetRotation(q);
     MeshComponent* mc = new MeshComponent(a);
     mc->SetMesh(mRenderer->GetMesh("../assets/Cube.gpmesh"));
 
@@ -1336,7 +1505,43 @@ void Game::LoadData() {
     mc = new MeshComponent(a);
     mc->SetMesh(mRenderer->GetMesh("../assets/Sphere.gpmesh"));
 
-    // Set up lighting
+    // Create a detailed environment using PlaneActor
+    const float start = -1250.0f;
+    const float size = 250.0f;
+    
+    // Create a 10x10 grid floor using PlaneActors
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            a = new PlaneActor(this);
+            a->SetPosition(Vector3(start + i * size, start + j * size, -100.0f));
+        }
+    }
+
+    // Create left/right walls
+    q = Quaternion(Vector3::UnitX, Math::PiOver2);
+    for (int i = 0; i < 10; i++) {
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(start + i * size, start - size, 0.0f));
+        a->SetRotation(q);
+
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(start + i * size, -start + size, 0.0f));
+        a->SetRotation(q);
+    }
+
+    // Create forward/back walls
+    q = Quaternion::Concatenate(q, Quaternion(Vector3::UnitZ, Math::PiOver2));
+    for (int i = 0; i < 10; i++) {
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(start - size, start + i * size, 0.0f));
+        a->SetRotation(q);
+
+        a = new PlaneActor(this);
+        a->SetPosition(Vector3(-start + size, start + i * size, 0.0f));
+        a->SetRotation(q);
+    }
+
+    // Set up realistic lighting
     mRenderer->SetAmbientLight(Vector3(0.2f, 0.2f, 0.2f));
     DirectionalLight& dir = mRenderer->GetDirectionalLight();
     dir.mDirection = Vector3(0.0f, -0.707f, -0.707f);
@@ -1345,8 +1550,29 @@ void Game::LoadData() {
 
     // Create the camera
     mCameraActor = new CameraActor(this);
+
+    // Create UI elements using the sprite system
+    a = new Actor(this);
+    a->SetPosition(Vector3(-350.0f, -350.0f, 0.0f));
+    SpriteComponent* sc = new SpriteComponent(a);
+    sc->SetTexture(mRenderer->GetTexture("../assets/HealthBar.png"));
+
+    a = new Actor(this);
+    a->SetPosition(Vector3(375.0f, -275.0f, 0.0f));
+    a->SetScale(0.75f);
+    sc = new SpriteComponent(a);
+    sc->SetTexture(mRenderer->GetTexture("../assets/Radar.png"));
 }
 ```
+
+This `LoadData` function creates a comprehensive test scene featuring:
+- **Test Objects**: A rotated cube and sphere for visual reference
+- **Complex Environment**: A complete room with floor and four walls (130 PlaneActor instances total)
+- **Realistic Lighting**: Ambient lighting plus directional light from above-left
+- **Interactive Camera**: First-person camera with WASD controls
+- **UI Elements**: Health bar and radar sprites positioned as HUD elements
+
+The scene demonstrates all major engine systems working together: 3D rendering, lighting, actor-component architecture, specialized actor types, and 2D UI overlay.
 
 ---
 
@@ -1354,11 +1580,208 @@ void Game::LoadData() {
 
 This guide provides the foundation. Here are some next steps to build a more feature-complete engine.
 
-### Step 12.1: Sprite Rendering for UI
-Create a `SpriteComponent` and corresponding shaders (`Sprite.vert`, `Sprite.frag`) to render 2D textures, which is perfect for UI elements like health bars, menus, and crosshairs. The key is to use an orthographic projection and disable depth testing.
+## 12. UI and Sprite System
 
-### Step 12.2: Texture Loading
-Implement a `Texture` class that uses a library like `stb_image` or `SDL_image` to load image files (e.g., PNG, JPG) from disk into an OpenGL texture object. The `Renderer` should cache these textures to avoid reloading them.
+The engine includes a complete 2D sprite rendering system for UI elements, overlays, and HUD components.
+
+### Step 12.1: Sprite Component Implementation
+
+`include/SpriteComponent.hpp` defines the sprite component interface:
+```cpp
+#pragma once
+#include "Component.hpp"
+
+class SpriteComponent : public Component {
+public:
+    SpriteComponent(Actor* owner, int drawOrder = 100);
+    ~SpriteComponent();
+
+    virtual void Draw(Shader* shader);
+    virtual void SetTexture(Texture* texture);
+
+    int GetDrawOrder() const { return mDrawOrder; }
+    int GetTexHeight() const { return mTextHeight; }
+    int GetTexWidth() const { return mTexWidth; }
+
+protected:
+    Texture* mTexture;
+    int mDrawOrder;      // Controls render order (lower draws first)
+    int mTextHeight;
+    int mTexWidth;
+};
+```
+
+`src/SpriteComponent.cpp` implements the sprite rendering logic:
+```cpp
+#include "SpriteComponent.hpp"
+#include "Actor.hpp"
+#include "Game.hpp"
+#include "Shader.hpp"
+#include "Texture.hpp"
+#include "Math.hpp"
+#include <GL/glew.h>
+
+SpriteComponent::SpriteComponent(Actor* owner, int drawOrder)
+    : Component(owner), mTexture(nullptr), mDrawOrder(drawOrder), 
+      mTexWidth(0), mTextHeight(0) {
+    // Register this sprite with the renderer
+    mOwner->GetGame()->GetRenderer()->AddSprite(this);
+}
+
+SpriteComponent::~SpriteComponent() {
+    mOwner->GetGame()->GetRenderer()->RemoveSprite(this);
+}
+
+void SpriteComponent::Draw(Shader* shader) {
+    if (mTexture) {
+        // Scale the quad by the texture's dimensions
+        // Use default size if texture dimensions are unavailable
+        float width = mTexWidth > 0 ? static_cast<float>(mTexWidth) : 64.0f;
+        float height = mTextHeight > 0 ? static_cast<float>(mTextHeight) : 64.0f;
+        Matrix4 scaleMat = Matrix4::CreateScale(width, height, 1.0f);
+
+        // Combine with actor's world transform
+        Matrix4 world = scaleMat * mOwner->GetWorldTransform();
+
+        // Set world transform uniform
+        shader->SetMatrixUniform("uWorldTransform", world);
+
+        // Activate the texture and draw
+        mTexture->SetActive();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    }
+}
+
+void SpriteComponent::SetTexture(Texture* texture) {
+    mTexture = texture;
+    // Cache texture dimensions
+    mTexWidth = texture->GetWidth();
+    mTextHeight = texture->GetHeight();
+}
+```
+
+### Step 12.2: Sprite Shaders
+
+The sprite system uses dedicated shaders optimized for 2D rendering with orthographic projection.
+
+`shaders/Sprite.vert`:
+```glsl
+#version 330
+
+// Input vertex attributes
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec2 inTexCoord;
+
+// Uniforms
+uniform mat4 uWorldTransform;
+uniform mat4 uViewProj;
+
+// Output to fragment shader
+out vec2 fragTexCoord;
+
+void main() {
+    // Transform position to clip space
+    vec4 pos = vec4(inPosition, 1.0);
+    pos = pos * uWorldTransform;
+    gl_Position = pos * uViewProj;
+    
+    // Pass through texture coordinate
+    fragTexCoord = inTexCoord;
+}
+```
+
+`shaders/Sprite.frag`:
+```glsl
+#version 330
+
+// Input from vertex shader
+in vec2 fragTexCoord;
+
+// Uniforms
+uniform sampler2D uTexture;
+
+// Output color
+out vec4 outColor;
+
+void main() {
+    // Sample the texture
+    outColor = texture(uTexture, fragTexCoord);
+}
+```
+
+### Step 12.3: Sprite Rendering Pipeline
+
+In `src/Renderer.cpp`, sprites are rendered after 3D meshes with specific OpenGL state:
+```cpp
+void Renderer::Draw() {
+    // ... 3D mesh rendering ...
+    
+    // Draw all sprite components with 2D settings
+    glDisable(GL_DEPTH_TEST);  // Disable depth testing for UI
+    glEnable(GL_BLEND);        // Enable alpha blending
+    glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+
+    // Activate sprite shader and vertex array
+    mSpriteShader->SetActive();
+    mSpriteVerts->SetActive();
+    
+    // Draw sprites in draw order (sorted by renderer)
+    for (auto sprite : mSprites) {
+        sprite->Draw(mSpriteShader);
+    }
+    
+    // Swap buffers
+    SDL_GL_SwapWindow(mWindow);
+}
+```
+
+This system allows for easy creation of UI elements like health bars, radars, and crosshairs by simply attaching a `SpriteComponent` to an actor and positioning it appropriately.
+
+## 13. Asset Loading and File Formats
+
+Our engine uses custom file formats and texture loading systems for optimal performance and control.
+
+### Step 13.1: Custom Mesh Format (.gpmesh)
+
+The engine uses a custom `.gpmesh` format for 3D models, which provides efficient loading and includes all necessary data:
+- Vertex positions, normals, and texture coordinates
+- Index data for triangle rendering
+- Material properties (specular power, texture references)
+- Bounding volume information for collision detection
+
+Assets you'll commonly work with:
+- `Cube.gpmesh` - Basic cube primitive
+- `Sphere.gpmesh` - Sphere primitive for testing
+- `Plane.gpmesh` - Ground/wall tiles (used extensively)
+- Associated `.png` texture files
+
+### Step 13.2: Texture Loading with STB Image
+
+The engine loads textures using the STB image library (included via FetchContent):
+```cpp
+// In Renderer class, texture loading is handled automatically
+class Texture* GetTexture(const std::string& fileName);
+
+// Usage in game code
+auto healthBarTexture = mRenderer->GetTexture("../assets/HealthBar.png");
+auto radarTexture = mRenderer->GetTexture("../assets/Radar.png");
+```
+
+The renderer maintains a texture cache to avoid reloading the same texture multiple times:
+```cpp
+std::unordered_map<std::string, class Texture*> mTextures;
+std::unordered_map<std::string, class Mesh*> mMeshes;
+```
+
+### Step 13.3: Advanced Asset Formats
+
+For more complex scenes, the engine supports:
+- `.gpskel` - Skeletal animation data
+- `.gpanim` - Animation sequences 
+- `.gplevel` - Level layout and actor placement data
+- `.gptext` - Localized text resources (English.gptext, Russian.gptext)
 
 ### Step 12.3: Audio System
 Integrate an audio library like `SDL_mixer` or `FMOD`. Create an `AudioSystem` class to manage loading and playing sounds. You can then create an `AudioComponent` to attach sounds to actors, allowing for 3D positional audio.
