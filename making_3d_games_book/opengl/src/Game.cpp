@@ -175,9 +175,9 @@ void Game::LoadData() {
   mc = new MeshComponent(a);
   mc->SetMesh(mRenderer->GetMesh("../assets/Sphere.gpmesh"));
 
-  // Setup floor
   const float start = -1250.0f;
   const float size = 250.0f;
+  // Setup floor
   for (int i = 0; i < 10; i++) {
     for (int j = 0; j < 10; j++) {
       a = new PlaneActor(this);
